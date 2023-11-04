@@ -1,0 +1,9 @@
+name = "Kurszuteilung"
+version = "0.1.0"
+description = "Zuteilung von Kindern zu Aktivitäten unter Berücksichtigung angegebener Präferenzen."
+authors = [ "Simon Berger" ]
+
+repository="https://github.com/SimBe195/kurszuteilung"
+
+[tool.black]
+line-length = 120
