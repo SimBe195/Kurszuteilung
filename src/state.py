@@ -5,6 +5,7 @@ from typing import Any
 from singleton_decorator import singleton
 from activity import Activity, ActivityIDGenerator
 from assignment import Assignment
+from id_generator import ID
 from student import Student, StudentIDGenerator
 
 from dataclasses import asdict
@@ -28,6 +29,12 @@ class State:
         self.set_activities([])
         self.set_assignment(Assignment())
 
+    def reset_student_id(self):
+        StudentIDGenerator().reset(max([student.id for student in self.students] or [0]) + 1)
+
+    def reset_activity_id(self):
+        ActivityIDGenerator().reset(max([activity.id for activity in self.activities] or [0]) + 1)
+
     def as_dict(self) -> dict[str, Any]:
         return {
             "students": [asdict(student) for student in self.students],
@@ -37,12 +44,38 @@ class State:
 
     def set_students(self, students: list[Student]) -> State:
         self.students = students
-        StudentIDGenerator().reset(max([student.id for student in self.students] or [0]) + 1)
+        self.reset_student_id()
+        return self
+
+    def add_student(self, student: Student) -> State:
+        self.students.append(student)
+        self.reset_student_id()
+        return self
+
+    def remove_student_by_id(self, student_id: ID) -> State:
+        for i, student in enumerate(self.students):
+            if student.id == student_id:
+                self.students.pop(i)
+                break
+        self.reset_student_id()
         return self
 
     def set_activities(self, activities: list[Activity]) -> State:
         self.activities = activities
-        ActivityIDGenerator().reset(max([activity.id for activity in self.activities] or [0]) + 1)
+        self.reset_activity_id()
+        return self
+
+    def add_activity(self, activity: Activity) -> State:
+        self.activities.append(activity)
+        self.reset_activity_id()
+        return self
+
+    def remove_activity_by_id(self, activity_id: ID) -> State:
+        for i, activity in enumerate(self.activities):
+            if activity.id == activity_id:
+                self.activities.pop(i)
+                break
+        self.reset_activity_id()
         return self
 
     def set_assignment(self, assignment: Assignment) -> State:

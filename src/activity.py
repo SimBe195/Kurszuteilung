@@ -12,7 +12,7 @@ class ActivityIDGenerator(IDGenerator):
 
 class InvalidGradeAccessError(Exception):
     def __init__(self, grade: int):
-        super().__init__(f"Grade must be between 1 and 4; received {grade}.")
+        super().__init__(f"Klasse muss zwischen 1 und 4 sein; ist {grade}.")
 
 
 @dataclass_json

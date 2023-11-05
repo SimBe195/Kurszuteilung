@@ -1,11 +1,12 @@
 from typing import Any
 
 import customtkinter as ctk
+from functools import partial
 
 
 class Sidebar(ctk.CTkFrame):
     def __init__(self, master: Any) -> None:
-        super().__init__(master=master, corner_radius=0, bg_color="#ffffff")
+        super().__init__(master=master, corner_radius=0, fg_color="#666666")
 
         self.frames: list[ctk.CTkFrame] = []
         self.buttons: list[ctk.CTkButton] = []
@@ -17,28 +18,29 @@ class Sidebar(ctk.CTkFrame):
             master=self,
             text=text,
             font=ctk.CTkFont(size=22),
-            fg_color="#aaaaaa",
-            hover_color="#888888",
+            hover_color="#aaaaaa",
             text_color="#000000",
             width=250,
             height=75,
             corner_radius=0,
-            command=lambda: self.show_frame(option_index),
+            command=partial(self.show_frame, idx=option_index),
         )
-        button.pack(fill="x", expand=False)
+        button.grid(row=option_index, column=0, sticky="ew")
+        # button.pack(fill="x", expand=False)
         page.place(relx=0.0, rely=option_index, relwidth=1.0, relheight=1.0)
 
         self.buttons.append(button)
         self.frames.append(page)
 
     def show_frame(self, idx: int = 0):
+        for button in self.buttons:
+            button.configure(require_redraw=True, fg_color="#888888")
+
+        self.buttons[idx].configure(require_redraw=True, fg_color="#cccccc")
+        self.frames[idx].tkraise()
+
         if self.current_index == idx:
             return
-        for button in self.buttons:
-            button.configure(require_redraw=True, fg_color="#aaaaaa")
-
-        self.buttons[idx].configure(require_redraw=True, fg_color="#777777")
-        self.frames[idx].tkraise()
         self._shift_frames_animation(from_idx=self.current_index, to_idx=idx)
         self.current_index = idx
 
@@ -50,7 +52,7 @@ class Sidebar(ctk.CTkFrame):
                 return
             for i, frame in enumerate(self.frames):
                 frame.place_configure(rely=i - from_idx + shifts[step])
-            self.after(2, move_frames, step + 1)
+            self.after(4, move_frames, step + 1)
 
         move_frames()
 

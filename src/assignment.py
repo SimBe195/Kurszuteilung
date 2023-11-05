@@ -8,49 +8,53 @@ from id_generator import ID
 from student import Student
 
 
-class StudentIDDoesNotExist(Exception):
+class AssignmentException(Exception):
+    pass
+
+
+class StudentIDDoesNotExist(AssignmentException):
     def __init__(self, student_id: ID):
-        super().__init__(f"Tried to remove a student with unknown id {student_id} from an activity.")
+        super().__init__(f"Versucht, Kind mit unbekannter ID {student_id} aus einem Kurs zu entfernen.")
 
 
-class ActivityIDDoesNotExist(Exception):
+class ActivityIDDoesNotExist(AssignmentException):
     def __init__(self, activity_id: ID):
-        super().__init__(f"Tried to remove a student from activity with unknown id {activity_id}.")
+        super().__init__(f"Versucht, ein Kind aus einem Kurs mit unbekannter ID {activity_id} zu entfernen.")
 
 
-class NoAssignedActivity(Exception):
+class NoAssignedActivity(AssignmentException):
     def __init__(self, student: Student):
-        super().__init__(f"Student {student} is not assigned to any activity.")
+        super().__init__(f"Kind {student} ist zu keinem Kurs zugeteilt.")
 
 
-class NotAssignedToActivity(Exception):
+class NotAssignedToActivity(AssignmentException):
     def __init__(self, student_id: ID, activity_id: ID):
-        super().__init__(f"Student with id {student_id} is not assigned to activity with id {activity_id}.")
+        super().__init__(f"Kind mit ID {student_id} ist nicht zum Kurs mit ID {activity_id} zugeteilt.")
 
 
-class EmptyPreferences(Exception):
+class EmptyPreferences(AssignmentException):
     def __init__(self, student: Student):
-        super().__init__(f"Student {student} has not picked any activities.")
+        super().__init__(f"Kind {student} hat keine Präferenzen angegeben.")
 
 
-class MinimumCapacityNotReached(Exception):
+class MinimumCapacityNotReached(AssignmentException):
     def __init__(self, activity: Activity, participant_count: int):
-        super().__init__(f"Only {participant_count} students assigned to activity {activity}.")
+        super().__init__(f"Nur {participant_count} Kinder sind zum Kurs {activity} zugeteilt.")
 
 
-class MaximumCapacityReached(Exception):
+class MaximumCapacityReached(AssignmentException):
     def __init__(self, activity: Activity, participant_count: int):
-        super().__init__(f"{participant_count} students assigned to activity {activity}.")
+        super().__init__(f"{participant_count} Kinder sind zum Kurs {activity} zugeteilt.")
 
 
-class GradeRestrictionViolation(Exception):
+class GradeRestrictionViolation(AssignmentException):
     def __init__(self, student: Student, activity: Activity):
-        super().__init__(f"Grade of student {student} is not permitted for activity {activity}.")
+        super().__init__(f"Klasse von Kind {student} ist in Kurs {activity} nicht erlaubt.")
 
 
-class ActivityNotPreferred(Exception):
+class ActivityNotPreferred(AssignmentException):
     def __init__(self, student: Student, activity: Activity):
-        super().__init__(f"Student {student} is assigned to activity {activity} which they did not choose.")
+        super().__init__(f"Kind {student} ist zu Kurs {activity} hinzugefügt den es nicht gewählt hat.")
 
 
 class Assignment:
@@ -94,6 +98,12 @@ class Assignment:
             if not self._activity_to_students_map[activity_id] == other._activity_to_students_map[activity_id]:
                 return False
         return True
+
+    def student_known(self, student_id: ID) -> bool:
+        return student_id in self._student_to_activities_map
+
+    def activity_known(self, activity_id: ID) -> bool:
+        return activity_id in self._activity_to_students_map
 
     def get_activities_for_student(self, student_id: ID) -> list[ID]:
         if student_id not in self._student_to_activities_map:
@@ -197,7 +207,7 @@ def assign_students(students: list[Student], activities: list[Activity]) -> Assi
 
     # Check min capacity
     for activity in activities:
-        if participants := assignment.participant_count(activity.id) < activity.min_capacity:
+        if (participants := assignment.participant_count(activity.id)) < activity.min_capacity:
             raise MinimumCapacityNotReached(activity, participants)
 
     # Remove overbooking
