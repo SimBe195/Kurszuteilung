@@ -44,7 +44,7 @@ class Sidebar(ctk.CTkFrame):
         self._shift_frames_animation(from_idx=self.current_index, to_idx=idx)
         self.current_index = idx
 
-    def _shift_frames_animation(self, from_idx: int, to_idx: int, steps=30):
+    def _shift_frames_animation(self, from_idx: int, to_idx: int, steps=5):
         shifts = [i / steps * (from_idx - to_idx) for i in range(1, steps + 1)]
 
         def move_frames(step: int = 0):
@@ -52,7 +52,7 @@ class Sidebar(ctk.CTkFrame):
                 return
             for i, frame in enumerate(self.frames):
                 frame.place_configure(rely=i - from_idx + shifts[step])
-            self.after(4, move_frames, step + 1)
+            self.after(20, move_frames, step + 1)
 
         move_frames()
 

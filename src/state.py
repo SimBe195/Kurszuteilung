@@ -27,7 +27,7 @@ class State:
     def reset(self) -> None:
         self.set_students([])
         self.set_activities([])
-        self.set_assignment(Assignment())
+        self.reset_assignment()
 
     def reset_student_id(self):
         StudentIDGenerator().reset(max([student.id for student in self.students] or [0]) + 1)
@@ -63,11 +63,13 @@ class State:
     def set_activities(self, activities: list[Activity]) -> State:
         self.activities = activities
         self.reset_activity_id()
+        self.reset_assignment()
         return self
 
     def add_activity(self, activity: Activity) -> State:
         self.activities.append(activity)
         self.reset_activity_id()
+        self.reset_assignment()
         return self
 
     def remove_activity_by_id(self, activity_id: ID) -> State:
@@ -75,12 +77,23 @@ class State:
             if activity.id == activity_id:
                 self.activities.pop(i)
                 break
+
+        for student in self.students:
+            try:
+                student.preferences.remove(activity_id)
+            except ValueError:
+                pass
+
         self.reset_activity_id()
+        self.reset_assignment()
         return self
 
     def set_assignment(self, assignment: Assignment) -> State:
         self.assignment = assignment
         return self
+
+    def reset_assignment(self) -> State:
+        return self.set_assignment(Assignment())
 
     def from_dict(self, state_dict: dict[str, Any]) -> State:
         assert set(state_dict.keys()) == {"students", "activities", "assignment"}

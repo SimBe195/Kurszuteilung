@@ -5,9 +5,9 @@ from reportlab.lib.units import cm
 from reportlab.lib import colors
 from reportlab.pdfgen import canvas
 
-from activity import Activity
+from activity import Activity, get_activity_id_map
 from assignment import Assignment
-from student import Student
+from student import Student, get_student_id_map
 
 
 def add_bullet_point(canv: canvas.Canvas, text: str, x: int, y: int, bullet_char: str = "-"):
@@ -18,13 +18,13 @@ def add_bullet_point(canv: canvas.Canvas, text: str, x: int, y: int, bullet_char
 def create_student_assignment_pdf(
     students: list[Student], activities: list[Activity], assignment: Assignment, path: Path
 ):
-    activity_id_map = {activity.id: activity for activity in activities}
+    activity_id_map = get_activity_id_map(activities)
     canv = canvas.Canvas(path.as_posix(), pagesize=A4)
-    canv.setTitle("Document Title")
+    canv.setTitle("Kinderzuteilungen")
 
     students_per_page = 2
 
-    for idx, student in enumerate(students, start=0):
+    for idx, student in enumerate(students):
         y_high = A4[1] - (idx % students_per_page) * (A4[1] // students_per_page)
         canv.setFont("Helvetica-Bold", 14)
         canv.drawString(
@@ -42,7 +42,7 @@ def create_student_assignment_pdf(
         for num, activity_id in enumerate(assignment.get_activities_for_student(student.id)):
             activity = activity_id_map[activity_id]
             add_bullet_point(
-                canv, f"{activity.name}, betreut von {activity.supervisor}.", 2.5 * cm, y_high - 5.5 * cm - num * cm
+                canv, f"{activity.name} ({activity.timespan})", 2.5 * cm, y_high - 5.3 * cm - num * 0.8 * cm
             )
 
         outro_text = canv.beginText(2 * cm, y_high - 9 * cm)
@@ -60,5 +60,39 @@ def create_student_assignment_pdf(
         canv.drawText(outro_text)
 
         if idx % students_per_page == students_per_page - 1:
+            canv.showPage()
+    canv.save()
+
+
+def create_course_assignment_pdf(
+    students: list[Student], activities: list[Activity], assignment: Assignment, path: Path
+):
+    student_id_map = get_student_id_map(students)
+    canv = canvas.Canvas(path.as_posix(), pagesize=A4)
+    canv.setTitle("Kurszuteilungen")
+
+    activities_per_page = 2
+
+    for idx, activity in enumerate(activities):
+        y_high = A4[1] - (idx % activities_per_page) * (A4[1] // activities_per_page)
+
+        canv.setFont("Helvetica", 12)
+        intro_text = canv.beginText(2 * cm, y_high - 2 * cm)
+        intro_text.textOut("Folgende Kinder sind zur Kursaktivität ")
+        intro_text.setFont("Helvetica-Bold", 12)
+        intro_text.textOut(activity.name)
+        intro_text.setFont("Helvetica", 12)
+        intro_text.textLine(f" ({str(activity.timespan)}) angemeldet:")
+        canv.drawText(intro_text)
+
+        columns = 2
+
+        for num, student_id in enumerate(assignment.get_students_for_activity(activity.id)):
+            x = 2.5 * cm + (num % columns) * ((A4[0] - 5 * cm) // columns)
+            y = y_high - 3.5 * cm - (num // columns) * 0.8 * cm
+            student = student_id_map[student_id]
+            add_bullet_point(canv, f"{student.name} ({student.grade}{student.subgrade})", x, y)
+
+        if idx % activities_per_page == activities_per_page - 1:
             canv.showPage()
     canv.save()

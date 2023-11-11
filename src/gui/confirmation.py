@@ -33,8 +33,6 @@ class ConfirmationDialog(ctk.CTkToplevel):
 
 def confirm_choice(master: Any, text: str) -> bool:
     dialog = ConfirmationDialog(master, text)
-    dialog.tkraise()
-    dialog.focus_set()
     master.wait_window(dialog)
 
     return dialog.choice_var.get()

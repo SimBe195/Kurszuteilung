@@ -92,6 +92,11 @@ class MainWindow(ctk.CTk):
         export_menu.add_command(label="Schülerzuteilungen...", command=self.export_per_student)
         export_menu.add_command(label="Kurszuteilungen...", command=self.export_per_activity)
 
+    def update_display(self):
+        self.student_page.display_students()
+        self.activity_page.display_activities()
+        self.assignment_page.display_assignment()
+
     def new(self):
         if not confirm_choice(
             self, "Es sind möglicherweise nicht-gespeicherte Änderungen vorhanden. Wirklich fortfahren?"
@@ -100,10 +105,7 @@ class MainWindow(ctk.CTk):
 
         self.last_save = None
         State().reset()
-
-        self.student_page.display_students()
-        self.activity_page.display_activities()
-        self.assignment_page.display_assignment()
+        self.update_display()
 
     def load(self):
         result = tk.filedialog.askopenfilename(parent=self, filetypes=[("json", "*.json")])
@@ -114,6 +116,7 @@ class MainWindow(ctk.CTk):
             return
         self.last_save = result_path
         State().read(self.last_save)
+        self.update_display()
 
     def save(self):
         if self.last_save is not None:
@@ -138,4 +141,9 @@ class MainWindow(ctk.CTk):
         pdf.create_student_assignment_pdf(state.students, state.activities, state.assignment, result_path)
 
     def export_per_activity(self):
-        pass
+        result = tk.filedialog.asksaveasfilename(parent=self, defaultextension=".pdf", filetypes=[("pdf", "*.pdf")])
+        if not result:
+            return
+        result_path = Path(result)
+        state = State()
+        pdf.create_course_assignment_pdf(state.students, state.activities, state.assignment, result_path)

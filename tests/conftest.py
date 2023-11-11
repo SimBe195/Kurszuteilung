@@ -1,6 +1,6 @@
 import pytest
 
-from activity import ActivityIDGenerator, Activity
+from activity import ActivityIDGenerator, Activity, Timespan
 from assignment import Assignment
 from state import State
 from student import StudentIDGenerator, Student
@@ -23,8 +23,12 @@ def example_students() -> list[Student]:
 @pytest.fixture
 def example_activities() -> list[Activity]:
     return [
-        Activity(name="A", supervisor="S", min_capacity=1, max_capacity=1, valid_grades=[True, True, True, True]),
-        Activity(name="B", supervisor="T", min_capacity=0, max_capacity=2, valid_grades=[True, True, False, False]),
+        Activity(
+            name="A", min_capacity=1, max_capacity=1, timespan=Timespan(32, 38), valid_grades=[True, True, True, True]
+        ),
+        Activity(
+            name="B", min_capacity=0, max_capacity=2, timespan=Timespan(40, 44), valid_grades=[True, True, False, False]
+        ),
     ]
 
 

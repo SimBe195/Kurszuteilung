@@ -3,8 +3,11 @@ from typing import Any
 
 import customtkinter as ctk
 
+from activity import get_activity_id_map
 from gui.confirmation import confirm_choice
+from gui.error_popup import open_error_popup
 from gui.search_dialog import search_student
+from id_generator import ID
 from state import State
 from student import Student
 
@@ -39,6 +42,11 @@ class StudentsPage(ctk.CTkFrame):
         )
         remove_student_button.grid(row=0, column=2, padx=10)
 
+        reset_preferences_button = ctk.CTkButton(
+            button_frame, text="Präferenzen löschen", font=ctk.CTkFont(size=18), command=self.reset_preferences
+        )
+        reset_preferences_button.grid(row=0, column=3, padx=10, sticky="e")
+
         self.student_view = ctk.CTkScrollableFrame(self)
         self.student_view.grid(row=3, column=0, padx=20, pady=30, sticky="nsew")
 
@@ -50,8 +58,7 @@ class StudentsPage(ctk.CTkFrame):
 
     def add_student(self):
         dialog = ModifyStudentDialog(self, title="Kind hinzufügen")
-        dialog.tkraise()
-        dialog.focus_set()
+        dialog.after(50, lambda: dialog.focus_set())
         self.wait_window(dialog)
         self.display_students()
 
@@ -60,8 +67,7 @@ class StudentsPage(ctk.CTkFrame):
             return
         dialog = ModifyStudentDialog(self, title="Kind bearbeiten")
         dialog.insert_student_data(student)
-        dialog.tkraise()
-        dialog.focus_set()
+        dialog.after(50, lambda: dialog.focus_set())
         self.wait_window(dialog)
         self.display_students()
 
@@ -71,13 +77,20 @@ class StudentsPage(ctk.CTkFrame):
                 State().remove_student_by_id(student.id)
                 self.display_students()
 
+    def reset_preferences(self):
+        if confirm_choice(self, f"Wirklich alle eingetragenen Präferenzen löschen?"):
+            for student in State().students:
+                student.preferences = []
+                State().reset_assignment()
+            self.display_students()
+
     def display_students(self):
         for widget in self.student_view.winfo_children():
             if widget.grid_info()["row"] > 0:
                 widget.destroy()
 
         state = State()
-        activity_id_map = {activity.id: activity for activity in state.activities}
+        activity_id_map = get_activity_id_map(state.activities)
         for row, student in enumerate(state.students, start=1):
             id_label = ctk.CTkLabel(self.student_view, text=str(student.id), font=ctk.CTkFont(size=16))
             id_label.grid(row=row, column=0, pady=5, sticky="nsew")
@@ -158,6 +171,11 @@ class ModifyStudentDialog(ctk.CTkToplevel):
         grade = int(self.grade_option.get()[0])
         subgrade = self.grade_option.get()[1]
         preferences = [activity_id for activity_id, check_var in self.preference_check_vars.items() if check_var.get()]
+
+        activity_map = get_activity_id_map(state.activities)
+        if any(not activity_map[activity_id].is_valid_grade(grade) for activity_id in preferences):
+            open_error_popup(self, "Ungültige Präferenzen!")
+            return
 
         if self.current_student is not None:
             self.current_student.name = name

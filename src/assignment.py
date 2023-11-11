@@ -3,23 +3,25 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import Any
 
-from activity import Activity
+from activity import Activity, get_activity_id_map
 from id_generator import ID
 from student import Student
+
+import pulp
 
 
 class AssignmentException(Exception):
     pass
 
 
-class StudentIDDoesNotExist(AssignmentException):
+class StudentIDNotAssigned(AssignmentException):
     def __init__(self, student_id: ID):
-        super().__init__(f"Versucht, Kind mit unbekannter ID {student_id} aus einem Kurs zu entfernen.")
+        super().__init__(f"Kind mit ID {student_id} ist keinem Kurs zugeordnet.")
 
 
-class ActivityIDDoesNotExist(AssignmentException):
+class ActivityIDNotAssigned(AssignmentException):
     def __init__(self, activity_id: ID):
-        super().__init__(f"Versucht, ein Kind aus einem Kurs mit unbekannter ID {activity_id} zu entfernen.")
+        super().__init__(f"Zu Aktivität mit ID {activity_id} ist kein Kind zugeteilt.")
 
 
 class NoAssignedActivity(AssignmentException):
@@ -39,12 +41,12 @@ class EmptyPreferences(AssignmentException):
 
 class MinimumCapacityNotReached(AssignmentException):
     def __init__(self, activity: Activity, participant_count: int):
-        super().__init__(f"Nur {participant_count} Kinder sind zum Kurs {activity} zugeteilt.")
+        super().__init__(f"Kapazität von Kurs {activity} ist mit {participant_count} unterschritten.")
 
 
 class MaximumCapacityReached(AssignmentException):
     def __init__(self, activity: Activity, participant_count: int):
-        super().__init__(f"{participant_count} Kinder sind zum Kurs {activity} zugeteilt.")
+        super().__init__(f"Kapazität von Kurs {activity} ist mit {participant_count} überschritten.")
 
 
 class GradeRestrictionViolation(AssignmentException):
@@ -107,13 +109,13 @@ class Assignment:
 
     def get_activities_for_student(self, student_id: ID) -> list[ID]:
         if student_id not in self._student_to_activities_map:
-            raise StudentIDDoesNotExist(student_id)
+            raise StudentIDNotAssigned(student_id)
 
         return list(self._student_to_activities_map[student_id])
 
     def get_students_for_activity(self, activity_id: ID) -> list[ID]:
         if activity_id not in self._activity_to_students_map:
-            raise ActivityIDDoesNotExist(activity_id)
+            raise ActivityIDNotAssigned(activity_id)
         return list(self._activity_to_students_map[activity_id])
 
     def assign_student_to_activity_by_id(self, student_id: ID, activity_id: ID) -> None:
@@ -121,13 +123,17 @@ class Assignment:
         self._activity_to_students_map[activity_id].add(student_id)
 
     def assign_student_to_activity(self, student: Student, activity: Activity) -> None:
+        if activity.id not in student.preferences:
+            raise ActivityNotPreferred(student, activity)
         if not activity.is_valid_grade(student.grade):
             raise GradeRestrictionViolation(student, activity)
+        if self.participant_count(activity.id) == activity.max_capacity:
+            raise MaximumCapacityReached(activity, activity.max_capacity + 1)
         self.assign_student_to_activity_by_id(student.id, activity.id)
 
     def remove_student_from_activity_by_id(self, student_id: ID, activity_id: ID) -> None:
         if student_id not in self._student_to_activities_map:
-            raise StudentIDDoesNotExist(student_id)
+            raise StudentIDNotAssigned(student_id)
         if activity_id not in self._student_to_activities_map[student_id]:
             raise NotAssignedToActivity(student_id, activity_id)
 
@@ -135,9 +141,7 @@ class Assignment:
         self._activity_to_students_map[activity_id].remove(student_id)
 
     def participant_count(self, activity_id: ID) -> int:
-        if activity_id not in self._activity_to_students_map:
-            raise ActivityIDDoesNotExist(activity_id)
-        return len(self._activity_to_students_map[activity_id])
+        return len(self._activity_to_students_map.get(activity_id, []))
 
     def check_validity(self, students: list[Student], activities: list[Activity]) -> None:
         activity_map = {activity.id: activity for activity in activities}
@@ -163,54 +167,49 @@ class Assignment:
                 raise MaximumCapacityReached(activity, participant_count)
 
 
-def reduce_overbooking(assignment: Assignment, activities: list[Activity]) -> None:
-    # Find an overbooked activity that we can attempt to reduce
-    for activity in activities:
-        if assignment.participant_count(activity.id) <= activity.max_capacity:
-            continue  # Skip if activity is not overbooked
-
-        # Try to remove a student from the activity and recurse
-        # Ger all students that have been assigned to the given activity
-
-        valid_removal_found = False
-        student_ids = assignment.get_students_for_activity(activity.id)
-        for student_id in student_ids:
-            # If the student is not assigned to any other activity, they can't be removed
-            if len(assignment.get_activities_for_student(student_id)) <= 1:
-                continue
-
-            assignment.remove_student_from_activity_by_id(student_id, activity.id)
-
-            try:
-                reduce_overbooking(assignment, activities)
-                valid_removal_found = True
-            except MaximumCapacityReached:
-                assignment.assign_student_to_activity_by_id(student_id, activity.id)
-
-        if not valid_removal_found:
-            raise MaximumCapacityReached(activity, assignment.participant_count(activity.id))
-
-
 def assign_students(students: list[Student], activities: list[Activity]) -> Assignment:
-    activity_map = {activity.id: activity for activity in activities}
-    assignment = Assignment()
-
-    # First, assign all students their preferred activities
+    activity_map = get_activity_id_map(activities)
     for student in students:
-        if len(student.preferences) == 0:
-            raise EmptyPreferences(student)
         for activity_id in student.preferences:
             if activity_id not in activity_map:
-                raise ActivityIDDoesNotExist(activity_id)
-            activity = activity_map[activity_id]
-            assignment.assign_student_to_activity(student, activity)
+                raise ActivityIDNotAssigned(activity_id)
+            if not (activity := activity_map[activity_id]).is_valid_grade(student.grade):
+                raise GradeRestrictionViolation(student, activity)
 
-    # Check min capacity
+    prob = pulp.LpProblem("StudentActivityAssignment", pulp.LpMaximize)
+    x = {}
+    for student in students:
+        for activity in activities:
+            x[(student.id, activity.id)] = pulp.LpVariable(f"x_{student.id}_{activity.id}", 0, 1, pulp.LpBinary)
+
     for activity in activities:
-        if (participants := assignment.participant_count(activity.id)) < activity.min_capacity:
-            raise MinimumCapacityNotReached(activity, participants)
+        prob += pulp.lpSum(x[(student.id, activity.id)] for student in students) <= activity.max_capacity
+        prob += pulp.lpSum(x[(student.id, activity.id)] for student in students) >= activity.min_capacity
 
-    # Remove overbooking
-    reduce_overbooking(assignment, activities)
+    for student in students:
+        non_preferences = [activity.id for activity in activities if activity.id not in student.preferences]
+        prob += pulp.lpSum(x[(student.id, activity_id)] for activity_id in non_preferences) == 0
+        prob += pulp.lpSum(x[(student.id, activity_id)] for activity_id in student.preferences) >= 1
+
+    for activity_0 in activities:
+        for activity_1 in activities:
+            if activity_0 == activity_1:
+                continue
+            if not Activity.overlap(activity_0, activity_1):
+                continue
+            for student in students:
+                prob += x[student.id, activity_0.id] + x[student.id, activity_1.id] <= 1
+
+    prob += pulp.lpSum(x[(student.id, activity_id)] for student in students for activity_id in student.preferences)
+
+    prob.solve()
+
+    assignment = Assignment()
+
+    for (student_id, activity_id), var in x.items():
+        if var.varValue == 1:
+            assignment.assign_student_to_activity_by_id(student_id, activity_id)
+
+    assignment.check_validity(students, activities)
 
     return assignment

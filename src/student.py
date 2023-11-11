@@ -19,3 +19,7 @@ class Student:
     subgrade: str
     preferences: list[ID] = field(default_factory=list)
     id: int = field(default_factory=StudentIDGenerator().get_next_id)
+
+
+def get_student_id_map(students: list[Student]) -> dict[ID, Student]:
+    return {student.id: student for student in students}

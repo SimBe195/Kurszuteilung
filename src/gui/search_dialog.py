@@ -97,8 +97,7 @@ def search_student(master: Any) -> Student | None:
             ("Klasse", lambda student: str(student.grade) + student.subgrade),
         ],
     )
-    dialog.tkraise()
-    dialog.focus_set()
+    dialog.after(50, lambda: dialog.focus_set())
     master.wait_window(dialog)
     return dialog.result
 
@@ -107,16 +106,12 @@ def search_activity(master: Any) -> Activity | None:
     dialog = SearchDialog(
         master,
         title="Kurs auswählen",
-        search_space={
-            f"{activity.id} {activity.name} {activity.supervisor}".lower(): activity for activity in State().activities
-        },
+        search_space={f"{activity.id} {activity.name}".lower(): activity for activity in State().activities},
         columns=[
             ("ID", lambda activity: activity.id),
             ("Bezeichnung", lambda activity: activity.name),
-            ("Betreuung", lambda activity: activity.supervisor),
         ],
     )
-    dialog.tkraise()
-    dialog.focus_set()
+    dialog.after(50, lambda: dialog.focus_set())
     master.wait_window(dialog)
     return dialog.result

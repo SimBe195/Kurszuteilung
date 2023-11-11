@@ -20,6 +20,5 @@ class ErrorPopup(ctk.CTkToplevel):
 
 def open_error_popup(master: Any, text: str) -> None:
     popup = ErrorPopup(master, text)
-    popup.tkraise()
-    popup.focus_set()
+    popup.after(50, lambda: popup.focus_set())
     master.wait_window(popup)
