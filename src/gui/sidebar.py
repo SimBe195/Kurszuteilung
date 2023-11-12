@@ -26,7 +26,6 @@ class Sidebar(ctk.CTkFrame):
             command=partial(self.show_frame, idx=option_index),
         )
         button.grid(row=option_index, column=0, sticky="ew")
-        # button.pack(fill="x", expand=False)
         page.place(relx=0.0, rely=option_index, relwidth=1.0, relheight=1.0)
 
         self.buttons.append(button)

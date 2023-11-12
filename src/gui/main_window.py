@@ -59,6 +59,8 @@ class MainWindow(ctk.CTk):
         file_menu.add_command(label="Speichern", accelerator="Strg+S", command=self.save)
         file_menu.add_command(label="Speichern Unter...", command=self.save_as)
         file_menu.add_separator()
+        file_menu.add_command(label="Ansicht aktualisieren", command=self.update_display)
+        file_menu.add_separator()
         file_menu.add_command(label="Beenden", accelerator="Strg+W", command=self.destroy)
 
         self.bind_all("<Control-n>", lambda _: self.new())
