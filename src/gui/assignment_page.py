@@ -55,6 +55,7 @@ class AssignmentPage(ctk.CTkFrame):
             open_error_popup(self, str(e))
 
         self.display_assignment()
+        self.focus_set()
 
     def display_assignment(self):
         for widget in self.assignment_view.winfo_children():
