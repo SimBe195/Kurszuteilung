@@ -28,7 +28,8 @@ class Timespan:
     to_slot: int
 
     def __post_init__(self):
-        assert 0 <= self.from_slot <= self.to_slot < 672
+        if not 0 <= self.from_slot <= self.to_slot < 672:
+            raise ValueError("Endzeit liegt vor der Startzeit!")
 
     @classmethod
     def from_day_hour_minute(

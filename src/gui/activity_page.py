@@ -238,26 +238,25 @@ class ModifyActivityDialog(ctk.CTkToplevel):
             return
 
         try:
-            if self.current_activity is not None:
-                self.current_activity.name = name
-                self.current_activity.timespan = Timespan.from_day_hour_minute(
-                    from_day, from_hour, from_minute, to_day, to_hour, to_minute
+            timespan = Timespan.from_day_hour_minute(from_day, from_hour, from_minute, to_day, to_hour, to_minute)
+        except ValueError as e:
+            open_error_popup(self, str(e))
+            return
+
+        if self.current_activity is not None:
+            self.current_activity.name = name
+            self.current_activity.timespan = timespan
+            self.current_activity.min_capacity = min_capacity
+            self.current_activity.max_capacity = max_capacity
+            self.current_activity.valid_grades = valid_grades
+        else:
+            state.add_activity(
+                Activity(
+                    name=name,
+                    min_capacity=min_capacity,
+                    max_capacity=max_capacity,
+                    timespan=timespan,
+                    valid_grades=valid_grades,
                 )
-                self.current_activity.min_capacity = min_capacity
-                self.current_activity.max_capacity = max_capacity
-                self.current_activity.valid_grades = valid_grades
-            else:
-                state.add_activity(
-                    Activity(
-                        name=name,
-                        min_capacity=min_capacity,
-                        max_capacity=max_capacity,
-                        timespan=Timespan.from_day_hour_minute(
-                            from_day, from_hour, from_minute, to_day, to_hour, to_minute
-                        ),
-                        valid_grades=valid_grades,
-                    )
-                )
-            self.destroy()
-        except AssertionError:
-            open_error_popup(self, "Ungültige Eingaben!")
+            )
+        self.destroy()

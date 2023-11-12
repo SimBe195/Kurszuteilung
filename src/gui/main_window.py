@@ -72,6 +72,8 @@ class MainWindow(ctk.CTk):
         student_menu.add_command(label="Kind hinzufügen...", command=self.student_page.add_student)
         student_menu.add_command(label="Kind bearbeiten...", command=self.student_page.edit_student)
         student_menu.add_command(label="Kind entfernen...", command=self.student_page.remove_student)
+        student_menu.add_separator()
+        student_menu.add_command(label="Präferenzen löschen", command=self.student_page.reset_preferences)
 
         activity_menu = tk.Menu(menu_bar, tearoff=False)
         menu_bar.add_cascade(label="Kurse", menu=activity_menu)
