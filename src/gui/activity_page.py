@@ -123,22 +123,19 @@ class ModifyActivityDialog(ctk.CTkToplevel):
         timespan_frame = ctk.CTkFrame(self)
         timespan_frame.grid(row=current_row, column=0, sticky="we")
         current_row += 1
-        timespan_from_label = ctk.CTkLabel(timespan_frame, text="Startzeit:", font=ctk.CTkFont(size=16))
-        timespan_from_label.grid(row=0, column=0, padx=20, pady=20, sticky="w")
-        self.timespan_from_day_option = ctk.CTkOptionMenu(timespan_frame, values=WEEKDAYS)
-        self.timespan_from_day_option.grid(row=0, column=1, padx=20)
+        timespan_label = ctk.CTkLabel(timespan_frame, text="Zeitslot:", font=ctk.CTkFont(size=16))
+        timespan_label.grid(row=0, column=0, padx=20, pady=20, sticky="w")
+        self.timespan_day_option = ctk.CTkOptionMenu(timespan_frame, values=WEEKDAYS)
+        self.timespan_day_option.grid(row=0, column=1, padx=10)
         self.timespan_from_hour_option = ctk.CTkOptionMenu(
             timespan_frame, width=50, values=[f"{h:02d}:{15 * m:02d}" for h in range(8, 18) for m in range(4)]
         )
-        self.timespan_from_hour_option.grid(row=0, column=2, padx=20)
-        timespan_to_label = ctk.CTkLabel(timespan_frame, text="Endzeit:", font=ctk.CTkFont(size=16))
-        timespan_to_label.grid(row=1, column=0, padx=20, pady=20, sticky="w")
-        self.timespan_to_day_option = ctk.CTkOptionMenu(timespan_frame, values=WEEKDAYS)
-        self.timespan_to_day_option.grid(row=1, column=1, padx=20)
+        self.timespan_from_hour_option.grid(row=0, column=2, padx=10)
+        ctk.CTkLabel(timespan_frame, text="bis", font=ctk.CTkFont(size=16)).grid(row=0, column=3)
         self.timespan_to_hour_option = ctk.CTkOptionMenu(
             timespan_frame, width=50, values=[f"{h:02d}:{15 * m:02d}" for h in range(8, 18) for m in range(4)]
         )
-        self.timespan_to_hour_option.grid(row=1, column=2, padx=20)
+        self.timespan_to_hour_option.grid(row=0, column=4, padx=10)
 
         capacity_frame = ctk.CTkFrame(self)
         capacity_frame.grid_columnconfigure(0, weight=1)
@@ -160,7 +157,7 @@ class ModifyActivityDialog(ctk.CTkToplevel):
         self.min_capacity_var.set(value=1)
         min_capacity_slider.grid(row=1, column=1, padx=20)
         self.max_capacity_label = ctk.CTkLabel(capacity_frame, font=ctk.CTkFont(size=14))
-        self.max_capacity_label.grid(row=3, column=0, padx=20, sticky="w")
+        self.max_capacity_label.grid(row=2, column=0, padx=20, pady=(0, 20), sticky="w")
         self.max_capacity_var = ctk.IntVar()
         max_capacity_slider = ctk.CTkSlider(
             capacity_frame,
@@ -171,7 +168,7 @@ class ModifyActivityDialog(ctk.CTkToplevel):
             command=lambda _: self.update_capacity_labels(),
         )
         self.max_capacity_var.set(50)
-        max_capacity_slider.grid(row=2, column=1, padx=20)
+        max_capacity_slider.grid(row=2, column=1, padx=20, pady=(0, 20))
 
         self.update_capacity_labels()
 
@@ -187,7 +184,7 @@ class ModifyActivityDialog(ctk.CTkToplevel):
             grade_checkbox = ctk.CTkCheckBox(
                 valid_grades_frame, text=str(grade), variable=check_var, onvalue=True, offvalue=False
             )
-            grade_checkbox.grid(row=1, column=grade - 1, padx=(20, 0), pady=10)
+            grade_checkbox.grid(row=1, column=grade - 1, padx=20, pady=10)
             self.valid_grades_check_vars.append(check_var)
 
         button_frame = ctk.CTkFrame(self)
@@ -212,9 +209,9 @@ class ModifyActivityDialog(ctk.CTkToplevel):
         self.name_entry.insert(0, activity.name)
         from_day, from_hour, from_minute = activity.timespan.get_from_day_hour_minute()
         to_day, to_hour, to_minute = activity.timespan.get_to_day_hour_minute()
-        self.timespan_from_day_option.set(WEEKDAYS[from_day])
+        assert from_day == to_day
+        self.timespan_day_option.set(WEEKDAYS[from_day])
         self.timespan_from_hour_option.set(f"{from_hour:02d}:{from_minute:02d}")
-        self.timespan_to_day_option.set(WEEKDAYS[to_day])
         self.timespan_to_hour_option.set(f"{to_hour:02d}:{to_minute:02d}")
         self.min_capacity_var.set(activity.min_capacity)
         self.max_capacity_var.set(activity.max_capacity)
@@ -225,9 +222,8 @@ class ModifyActivityDialog(ctk.CTkToplevel):
     def on_accept(self):
         state = State()
         name = self.name_entry.get()
-        from_day = WEEKDAYS.index(self.timespan_from_day_option.get())
+        day = WEEKDAYS.index(self.timespan_day_option.get())
         from_hour, from_minute = map(int, self.timespan_from_hour_option.get().split(":"))
-        to_day = WEEKDAYS.index(self.timespan_to_day_option.get())
         to_hour, to_minute = map(int, self.timespan_to_hour_option.get().split(":"))
         min_capacity = self.min_capacity_var.get()
         max_capacity = self.max_capacity_var.get()
@@ -238,7 +234,7 @@ class ModifyActivityDialog(ctk.CTkToplevel):
             return
 
         try:
-            timespan = Timespan.from_day_hour_minute(from_day, from_hour, from_minute, to_day, to_hour, to_minute)
+            timespan = Timespan.from_day_hour_minute(day, from_hour, from_minute, day, to_hour, to_minute)
         except ValueError as e:
             open_error_popup(self, str(e))
             return
