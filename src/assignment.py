@@ -202,7 +202,8 @@ def assign_students(students: list[Student], activities: list[Activity]) -> Assi
 
     prob += pulp.lpSum(x[(student.id, activity_id)] for student in students for activity_id in student.preferences)
 
-    prob.solve()
+    solver = pulp.PULP_CBC_CMD(msg=False)
+    prob.solve(solver)
 
     assignment = Assignment()
 
