@@ -219,3 +219,27 @@ def test_timing_conflicts():
     assignment = assign_mod.assign_students(students, activities)
     assert len(assignment.get_activities_for_student(students[0].id)) == 1
     assert len(assignment.get_activities_for_student(students[1].id)) == 1
+
+
+def test_invalid_preference_assignment():
+    activities = [
+        Activity(
+            name="A",
+            min_capacity=1,
+            max_capacity=2,
+            valid_grades=[False, True, True, True],
+        ),
+        Activity(
+            name="B",
+            min_capacity=1,
+            max_capacity=2,
+            valid_grades=[True, True, True, True],
+        ),
+    ]
+    students = [
+        Student(name="A", grade=1, subgrade="a", preferences=[1, 2]),  # Preference for activity 0 but not allowed there
+        Student(name="B", grade=2, subgrade="a", preferences=[1, 2]),
+    ]
+    assignment = assign_mod.assign_students(students, activities)
+    assert set(assignment.get_activities_for_student(students[0].id)) == {activities[1].id}
+    assert set(assignment.get_activities_for_student(students[1].id)) == {activities[0].id, activities[1].id}

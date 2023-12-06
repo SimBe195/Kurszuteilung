@@ -240,6 +240,21 @@ class ModifyActivityDialog(ctk.CTkToplevel):
             return
 
         if self.current_activity is not None:
+            excluded_students = 0
+            for student in state.students:
+                if (
+                    self.current_activity.id in student.preferences
+                    and self.current_activity.is_valid_grade(student.grade)
+                    and not valid_grades[student.grade - 1]
+                ):
+                    excluded_students += 1
+            if excluded_students > 0 and not confirm_choice(
+                self,
+                f"Aktivität wurde von {excluded_students} Kindern gewählt, die nach Reduktion "
+                "erlaubter Klassen nun nicht mehr hier zugeteilt werden können.",
+            ):
+                return
+
             self.current_activity.name = name
             self.current_activity.timespan = timespan
             self.current_activity.min_capacity = min_capacity

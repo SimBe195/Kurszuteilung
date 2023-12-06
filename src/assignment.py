@@ -173,8 +173,6 @@ def assign_students(students: list[Student], activities: list[Activity]) -> Assi
         for activity_id in student.preferences:
             if activity_id not in activity_map:
                 raise ActivityIDNotAssigned(activity_id)
-            if not (activity := activity_map[activity_id]).is_valid_grade(student.grade):
-                raise GradeRestrictionViolation(student, activity)
 
     prob = pulp.LpProblem("StudentActivityAssignment", pulp.LpMaximize)
     x = {}
@@ -187,9 +185,14 @@ def assign_students(students: list[Student], activities: list[Activity]) -> Assi
         prob += pulp.lpSum(x[(student.id, activity.id)] for student in students) >= activity.min_capacity
 
     for student in students:
-        non_preferences = [activity.id for activity in activities if activity.id not in student.preferences]
-        prob += pulp.lpSum(x[(student.id, activity_id)] for activity_id in non_preferences) == 0
-        prob += pulp.lpSum(x[(student.id, activity_id)] for activity_id in student.preferences) >= 1
+        valid_prefs = [
+            activity.id
+            for activity in activities
+            if activity.id in student.preferences and activity.is_valid_grade(student.grade)
+        ]
+        non_prefs = list(set(map(lambda act: act.id, activities)).difference(valid_prefs))
+        prob += pulp.lpSum(x[(student.id, activity_id)] for activity_id in non_prefs) == 0
+        prob += pulp.lpSum(x[(student.id, activity_id)] for activity_id in valid_prefs) >= 1
 
     for activity_0 in activities:
         for activity_1 in activities:

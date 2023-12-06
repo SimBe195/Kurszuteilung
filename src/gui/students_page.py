@@ -5,7 +5,6 @@ import customtkinter as ctk
 
 from activity import get_activity_id_map
 from gui.confirmation import confirm_choice
-from gui.error_popup import open_error_popup
 from gui.search_dialog import search_student
 from id_generator import ID
 from state import State
@@ -173,9 +172,13 @@ class ModifyStudentDialog(ctk.CTkToplevel):
         preferences = [activity_id for activity_id, check_var in self.preference_check_vars.items() if check_var.get()]
 
         activity_map = get_activity_id_map(state.activities)
-        if any(not activity_map[activity_id].is_valid_grade(grade) for activity_id in preferences):
-            open_error_popup(self, "Ungültige Präferenzen!")
-            return
+        for activity_id in preferences:
+            if not activity_map[activity_id].is_valid_grade(grade) and not confirm_choice(
+                self,
+                f"Präferenz für Aktivität {activity_map[activity_id].name} angegeben, "
+                f"die keine Kinder aus Klasse {grade} zulässt.",
+            ):
+                return
 
         if self.current_student is not None:
             self.current_student.name = name
