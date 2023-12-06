@@ -35,7 +35,7 @@ def create_student_assignment_pdf(
         intro_text = canv.beginText(2 * cm, y_high - 3 * cm)
         intro_text.textLine(f"Liebe Eltern von {student.name},")
         intro_text.textLine("")
-        intro_text.textLine("Hiermit teilen wir Ihnen mit, dass ihr Kind zu den folgenden Kursaktivitäten")
+        intro_text.textLine("Hiermit teilen wir Ihnen mit, dass Ihr Kind zu den folgenden Kursaktivitäten")
         intro_text.textLine("angemeldet ist:")
         canv.drawText(intro_text)
 
@@ -78,18 +78,21 @@ def create_course_assignment_pdf(
 
         canv.setFont("Helvetica", 12)
         intro_text = canv.beginText(2 * cm, y_high - 2 * cm)
-        intro_text.textOut("Folgende Kinder sind zur Kursaktivität ")
+        intro_text.textLine("Folgende Kinder sind zur Kursaktivität")
+        intro_text.textLine("")
         intro_text.setFont("Helvetica-Bold", 12)
-        intro_text.textOut(activity.name)
+        intro_text.textOut(f"  {activity.name} ")
         intro_text.setFont("Helvetica", 12)
-        intro_text.textLine(f" ({str(activity.timespan)}) angemeldet:")
+        intro_text.textLine(f"({str(activity.timespan)})")
+        intro_text.textLine("")
+        intro_text.textLine("angemeldet:")
         canv.drawText(intro_text)
 
         columns = 2
 
         for num, student_id in enumerate(assignment.get_students_for_activity(activity.id)):
             x = 2.5 * cm + (num % columns) * ((A4[0] - 5 * cm) // columns)
-            y = y_high - 3.5 * cm - (num // columns) * 0.8 * cm
+            y = y_high - 5 * cm - (num // columns) * 0.8 * cm
             student = student_id_map[student_id]
             add_bullet_point(canv, f"{student.name} ({student.grade}{student.subgrade})", x, y)
 
