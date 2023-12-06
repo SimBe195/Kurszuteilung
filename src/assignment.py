@@ -143,28 +143,41 @@ class Assignment:
     def participant_count(self, activity_id: ID) -> int:
         return len(self._activity_to_students_map.get(activity_id, []))
 
-    def check_validity(self, students: list[Student], activities: list[Activity]) -> None:
+    def check_validity(self, students: list[Student], activities: list[Activity]) -> list[AssignmentException]:
+        exceptions = []
+
         activity_map = {activity.id: activity for activity in activities}
 
         for student in students:
-            assigned_activities = self.get_activities_for_student(student.id)
+            try:
+                assigned_activities = self.get_activities_for_student(student.id)
+            except StudentIDNotAssigned as e:
+                exceptions.append(e)
+                continue
             if len(assigned_activities) == 0:
-                raise NoAssignedActivity(student)
+                exceptions.append(NoAssignedActivity(student))
+                continue
 
             for activity_id in assigned_activities:
                 activity = activity_map[activity_id]
                 if activity_id not in student.preferences:
-                    raise ActivityNotPreferred(student, activity)
+                    exceptions.append(ActivityNotPreferred(student, activity))
+                    continue
 
                 if not activity.is_valid_grade(student.grade):
-                    raise GradeRestrictionViolation(student, activity)
+                    exceptions.append(GradeRestrictionViolation(student, activity))
+                    continue
 
         for activity in activities:
             participant_count = self.participant_count(activity.id)
             if participant_count < activity.min_capacity:
-                raise MinimumCapacityNotReached(activity, participant_count)
+                exceptions.append(MinimumCapacityNotReached(activity, participant_count))
+                continue
             if participant_count > activity.max_capacity:
-                raise MaximumCapacityReached(activity, participant_count)
+                exceptions.append(MaximumCapacityReached(activity, participant_count))
+                continue
+
+        return exceptions
 
 
 def assign_students(students: list[Student], activities: list[Activity]) -> Assignment:
@@ -174,25 +187,30 @@ def assign_students(students: list[Student], activities: list[Activity]) -> Assi
             if activity_id not in activity_map:
                 raise ActivityIDNotAssigned(activity_id)
 
+    def is_valid(stud: Student, act: Activity) -> bool:
+        return act.id in stud.preferences and act.is_valid_grade(stud.grade)
+
     prob = pulp.LpProblem("StudentActivityAssignment", pulp.LpMaximize)
     x = {}
+    no_course_penalties = {}
     for student in students:
         for activity in activities:
             x[(student.id, activity.id)] = pulp.LpVariable(f"x_{student.id}_{activity.id}", 0, 1, pulp.LpBinary)
+        no_course_penalties[student.id] = pulp.LpVariable(f"x_{student.id}_pen", 0, None, pulp.LpInteger)
 
     for activity in activities:
         prob += pulp.lpSum(x[(student.id, activity.id)] for student in students) <= activity.max_capacity
         prob += pulp.lpSum(x[(student.id, activity.id)] for student in students) >= activity.min_capacity
 
     for student in students:
-        valid_prefs = [
-            activity.id
-            for activity in activities
-            if activity.id in student.preferences and activity.is_valid_grade(student.grade)
-        ]
-        non_prefs = list(set(map(lambda act: act.id, activities)).difference(valid_prefs))
-        prob += pulp.lpSum(x[(student.id, activity_id)] for activity_id in non_prefs) == 0
-        prob += pulp.lpSum(x[(student.id, activity_id)] for activity_id in valid_prefs) >= 1
+        prob += (
+            pulp.lpSum(x[(student.id, activity.id)] for activity in activities if not is_valid(student, activity)) == 0
+        )
+        prob += (
+            pulp.lpSum(x[(student.id, activity.id)] for activity in activities if is_valid(student, activity))
+            + no_course_penalties[student.id]
+            >= 1
+        )
 
     for activity_0 in activities:
         for activity_1 in activities:
@@ -203,7 +221,9 @@ def assign_students(students: list[Student], activities: list[Activity]) -> Assi
             for student in students:
                 prob += x[student.id, activity_0.id] + x[student.id, activity_1.id] <= 1
 
-    prob += pulp.lpSum(x[(student.id, activity_id)] for student in students for activity_id in student.preferences)
+    prob += pulp.lpSum(
+        x[(student.id, activity.id)] for student in students for activity in activities if is_valid(student, activity)
+    ) - 1000 * pulp.lpSum(no_course_penalties[student.id] for student in students)
 
     solver = pulp.PULP_CBC_CMD(msg=False)
     prob.solve(solver)
@@ -213,7 +233,5 @@ def assign_students(students: list[Student], activities: list[Activity]) -> Assi
     for (student_id, activity_id), var in x.items():
         if var.varValue == 1:
             assignment.assign_student_to_activity_by_id(student_id, activity_id)
-
-    assignment.check_validity(students, activities)
 
     return assignment

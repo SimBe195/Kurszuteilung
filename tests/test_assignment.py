@@ -72,8 +72,8 @@ def test_assign_validity_grade_restriction_violation():
     student = Student(name="A", grade=2, subgrade="a", preferences=[activity.id])
     assignment = assign_mod.Assignment()
     assignment.assign_student_to_activity_by_id(student.id, activity.id)
-    with pytest.raises(assign_mod.GradeRestrictionViolation):
-        assignment.check_validity([student], [activity])
+    exceptions = assignment.check_validity([student], [activity])
+    assert any(isinstance(e, assign_mod.GradeRestrictionViolation) for e in exceptions)
 
 
 def test_assign_validity_min_capacity_violation():
@@ -81,8 +81,8 @@ def test_assign_validity_min_capacity_violation():
     student = Student(name="A", grade=2, subgrade="a", preferences=[activity.id])
     assignment = assign_mod.Assignment()
     assignment.assign_student_to_activity(student, activity)
-    with pytest.raises(assign_mod.MinimumCapacityNotReached):
-        assignment.check_validity([student], [activity])
+    exceptions = assignment.check_validity([student], [activity])
+    assert any(isinstance(e, assign_mod.MinimumCapacityNotReached) for e in exceptions)
 
 
 def test_assign_validity_max_capacity_violation():
@@ -109,8 +109,8 @@ def test_assign_validity_no_assignment(example_students, example_activities):
     assignment = assign_mod.Assignment()
     assignment.assign_student_to_activity(student, activity)
     assignment.remove_student_from_activity_by_id(student.id, activity.id)
-    with pytest.raises(assign_mod.NoAssignedActivity):
-        assignment.check_validity([student], [activity])
+    exceptions = assignment.check_validity([student], [activity])
+    assert any(isinstance(e, assign_mod.NoAssignedActivity) for e in exceptions)
 
 
 def test_auto_assign(example_students, example_activities, example_assignment):
@@ -157,8 +157,9 @@ def test_auto_assign_non_existing_preference(example_students, example_activitie
 
 def test_auto_assign_minimum_capacity_violation(example_students, example_activities):
     example_activities[0].min_capacity = 5
-    with pytest.raises(assign_mod.MinimumCapacityNotReached):
-        assign_mod.assign_students(example_students, example_activities)
+    assignment = assign_mod.assign_students(example_students, example_activities)
+    exceptions = assignment.check_validity(example_students, example_activities)
+    assert any(isinstance(e, assign_mod.MinimumCapacityNotReached) for e in exceptions)
 
 
 def test_auto_assign_maximum_capacity_violation():
@@ -168,8 +169,9 @@ def test_auto_assign_maximum_capacity_violation():
         Student(name="B", grade=1, subgrade="a", preferences=[activity.id]),
         Student(name="C", grade=1, subgrade="a", preferences=[activity.id]),
     ]
-    with pytest.raises(assign_mod.StudentIDNotAssigned):
-        assign_mod.assign_students(students, [activity])
+    assignment = assign_mod.assign_students(students, [activity])
+    exceptions = assignment.check_validity(students, [activity])
+    assert any(isinstance(e, assign_mod.StudentIDNotAssigned) for e in exceptions)
 
 
 def test_overbooking_and_capacity_constraints():

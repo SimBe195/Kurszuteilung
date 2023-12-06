@@ -1,11 +1,12 @@
+import copy
 from tkinter import ttk
 from typing import Any
 
 import customtkinter as ctk
 
-from assignment import assign_students, Assignment, AssignmentException
+from activity import Activity
+from assignment import assign_students, Assignment
 from gui.confirmation import confirm_choice
-from gui.error_popup import open_error_popup
 from state import State
 
 
@@ -49,10 +50,18 @@ class AssignmentPage(ctk.CTkFrame):
 
     def generate_assignment(self):
         state = State()
-        try:
-            state.set_assignment(assign_students(state.students, state.activities))
-        except AssignmentException as e:
-            open_error_popup(self, str(e))
+        new_assignment = assign_students(state.students, state.activities)
+
+        exceptions = new_assignment.check_validity(state.students, state.activities)
+
+        if len(exceptions) > 0:
+            confirmation_text = f"Zuteilung enthält {len(exceptions)} Fehler:\n\n" + "\n\n".join(
+                map(str, exceptions[:10])
+            )
+            if not confirm_choice(self, confirmation_text):
+                return
+
+        state.set_assignment(new_assignment)
 
         self.display_assignment()
         self.focus_set()
@@ -62,17 +71,29 @@ class AssignmentPage(ctk.CTkFrame):
             widget.destroy()
         state = State()
         student_id_map = {student.id: student for student in state.students}
-        for activity_idx, activity in enumerate(state.activities):
+        activities = copy.deepcopy(state.activities)
+        activities.append(Activity(name="Kein Kurs", id=-1))
+
+        for activity_idx, activity in enumerate(activities):
             activity_frame = ctk.CTkFrame(self.assignment_view)
             activity_frame.grid(row=activity_idx // 2, column=activity_idx % 2, padx=20, pady=20, sticky="nsew")
 
             activity_title = ctk.CTkLabel(activity_frame, text=activity.name, font=ctk.CTkFont(size=22))
             activity_title.grid(row=0, column=0, columnspan=3, padx=5, pady=20)
 
-            if not state.assignment.activity_known(activity.id):
-                continue
+            if activity.id != -1:
+                if not state.assignment.activity_known(activity.id):
+                    continue
+                student_ids = state.assignment.get_students_for_activity(activity.id)
+            else:
+                student_ids = [
+                    student.id
+                    for student in state.students
+                    if not state.assignment.student_known(student.id)
+                    or len(state.assignment.get_activities_for_student(student.id)) == 0
+                ]
 
-            for student_row, student_id in enumerate(state.assignment.get_students_for_activity(activity.id), start=1):
+            for student_row, student_id in enumerate(student_ids, start=1):
                 student = student_id_map[student_id]
 
                 index_label = ctk.CTkLabel(activity_frame, text=f"{student_row}.", font=ctk.CTkFont(size=16))
