@@ -40,6 +40,8 @@ class ActivityPage(ctk.CTkFrame):
         )
         edit_activity_button.grid(row=0, column=2, padx=10)
 
+        # TODO: Add button for splitting up an activity into two
+
         self.activity_view = ctk.CTkScrollableFrame(self)
         self.activity_view.grid(row=3, column=0, padx=20, pady=30, sticky="nsew")
 
