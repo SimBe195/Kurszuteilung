@@ -8,6 +8,7 @@ from state import State
 from .assignment_page import AssignmentPage
 from .confirmation import confirm_choice
 from .sidebar import Sidebar
+from .statistics_page import StatisticsPage
 from .students_page import StudentsPage
 from .activity_page import ActivityPage
 import pdf
@@ -33,12 +34,16 @@ class MainWindow(ctk.CTk):
         self.student_page = StudentsPage(self.main_frame)
         self.student_page.place(relx=0.0, rely=0.0, relwidth=1.0, relheight=1.0)
         self.assignment_page = AssignmentPage(self.main_frame)
+        self.assignment_page.place(relx=0.0, rely=0.0, relwidth=1.0, relheight=1.0)
+        self.statistics_page = StatisticsPage(self.main_frame)
+        self.statistics_page.place(relx=0.0, rely=0.0, relwidth=1.0, relheight=1.0)
 
         self.sidebar = Sidebar(self)
 
         self.sidebar.add_option(text="Kurse", page=self.activity_page)
         self.sidebar.add_option(text="Kinder", page=self.student_page)
         self.sidebar.add_option(text="Zuteilung", page=self.assignment_page)
+        self.sidebar.add_option(text="Statistiken", page=self.statistics_page)
         self.sidebar.grid(row=0, column=0, sticky="nsw")
         self.sidebar.show_frame()
 
@@ -100,6 +105,7 @@ class MainWindow(ctk.CTk):
         self.student_page.display_students()
         self.activity_page.display_activities()
         self.assignment_page.display_assignment()
+        self.statistics_page.display_statistics()
 
     def new(self):
         if not confirm_choice(

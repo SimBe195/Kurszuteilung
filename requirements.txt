@@ -4,3 +4,5 @@ reportlab~=4.0.6
 dataclasses-json~=0.6.2
 singleton-decorator~=1.0.0
 pulp~=2.7.0
+matplotlib~=3.8.2
+numpy~=1.26.2

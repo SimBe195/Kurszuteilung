@@ -64,6 +64,9 @@ class Assignment:
         self._student_to_activities_map: defaultdict[ID, set[ID]] = defaultdict(set)
         self._activity_to_students_map: defaultdict[ID, set[ID]] = defaultdict(set)
 
+    def is_empty(self) -> bool:
+        return all(self.participant_count(act_id) == 0 for act_id in self._activity_to_students_map)
+
     def as_dict(self) -> dict[str, Any]:
         return {
             "student_activity_map": {
