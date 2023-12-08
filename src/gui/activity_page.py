@@ -1,3 +1,4 @@
+import copy
 from typing import Any
 
 import customtkinter as ctk
@@ -40,7 +41,10 @@ class ActivityPage(ctk.CTkFrame):
         )
         edit_activity_button.grid(row=0, column=2, padx=10)
 
-        # TODO: Add button for splitting up an activity into two
+        split_activity_button = ctk.CTkButton(
+            button_frame, text="Aufspalten", font=ctk.CTkFont(size=18), command=self.split_activity
+        )
+        split_activity_button.grid(row=0, column=3, padx=10)
 
         self.activity_view = ctk.CTkScrollableFrame(self)
         self.activity_view.grid(row=3, column=0, padx=20, pady=30, sticky="nsew")
@@ -71,6 +75,27 @@ class ActivityPage(ctk.CTkFrame):
             if confirm_choice(self, f'Kurs "{activity.name}" wirklich entfernen?'):
                 State().remove_activity_by_id(activity.id)
                 self.display_activities()
+
+    def split_activity(self):
+        if (activity := search_activity(self)) is not None:
+            if not confirm_choice(self, f'Kurs "{activity.name}" wirklich aufspalten?'):
+                return
+
+            activity_2 = Activity(
+                name=f"{activity.name} 2",
+                min_capacity=activity.min_capacity,
+                max_capacity=activity.max_capacity,
+                timespan=activity.timespan,
+                valid_grades=copy.deepcopy(activity.valid_grades),
+            )
+            State().add_activity(activity_2)
+            for student in State().students:
+                if activity.id in student.preferences:
+                    student.preferences.append(activity_2.id)
+
+            activity.name = f"{activity.name} 1"
+
+            self.display_activities()
 
     def display_activities(self):
         for widget in self.activity_view.winfo_children():

@@ -88,6 +88,7 @@ class MainWindow(ctk.CTk):
         activity_menu.add_command(label="Kurs hinzufügen...", command=self.activity_page.add_activity)
         activity_menu.add_command(label="Kurs bearbeiten...", command=self.activity_page.edit_activity)
         activity_menu.add_command(label="Kurs entfernen...", command=self.activity_page.remove_activity)
+        activity_menu.add_command(label="Kurs aufteilen...", command=self.activity_page.split_activity)
 
         assignment_menu = tk.Menu(menu_bar, tearoff=False)
         menu_bar.add_cascade(label="Zuteilung", menu=assignment_menu)
