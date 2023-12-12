@@ -60,11 +60,11 @@ class Timespan:
         to_day, to_hour, to_minute = self.get_to_day_hour_minute()
 
         if from_day == to_day:
-            return f"{WEEKDAYS[from_day]}, {from_hour:02d}:{from_minute:02d} Uhr - {to_hour:02d}:{to_minute:02d} Uhr"
+            return f"{WEEKDAYS[from_day]}s, {from_hour:02d}:{from_minute:02d} Uhr - {to_hour:02d}:{to_minute:02d} Uhr"
         else:
             return (
-                f"{WEEKDAYS[from_day]}, {from_hour:02d}:{from_minute:02d} Uhr - "
-                f"{WEEKDAYS[to_day]}, {to_hour:02d}:{to_minute:02d} Uhr"
+                f"{WEEKDAYS[from_day]}s, {from_hour:02d}:{from_minute:02d} Uhr - "
+                f"{WEEKDAYS[to_day]}s, {to_hour:02d}:{to_minute:02d} Uhr"
             )
 
     @staticmethod
