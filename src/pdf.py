@@ -24,7 +24,7 @@ def create_student_assignment_pdf(
 
     students_per_page = 2
 
-    for idx, student in enumerate(students):
+    for idx, student in enumerate([student for student in students if assignment.student_known(student.id)]):
         y_high = A4[1] - (idx % students_per_page) * (A4[1] // students_per_page)
         canv.setFont("Helvetica-Bold", 14)
         canv.drawString(
