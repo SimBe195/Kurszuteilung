@@ -4,6 +4,9 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import cm
 from reportlab.lib import colors
 from reportlab.pdfgen import canvas
+from operator import attrgetter
+
+from reportlab.platypus import Table
 
 from activity import Activity, get_activity_id_map
 from assignment import Assignment
@@ -88,14 +91,66 @@ def create_course_assignment_pdf(
         intro_text.textLine("angemeldet:")
         canv.drawText(intro_text)
 
-        columns = 2
+        students = [student_id_map[student_id] for student_id in assignment.get_students_for_activity(activity.id)]
+        sorted_students = sorted(students, key=attrgetter("grade", "subgrade", "name"))
 
-        for num, student_id in enumerate(assignment.get_students_for_activity(activity.id)):
-            x = 2.5 * cm + (num % columns) * ((A4[0] - 5 * cm) // columns)
-            y = y_high - 5 * cm - (num // columns) * 0.8 * cm
-            student = student_id_map[student_id]
+        columns = 2
+        rows = -(len(students) // -columns)
+
+        for num, student in enumerate(sorted_students):
+            x = 2.5 * cm + (num // rows) * ((A4[0] - 5 * cm) // columns)
+            y = y_high - 5 * cm - (num % rows) * 0.8 * cm
             add_bullet_point(canv, f"{student.name} ({student.grade}{student.subgrade})", x, y)
 
         if idx % activities_per_page == activities_per_page - 1:
             canv.showPage()
+    canv.save()
+
+
+def create_course_attendance_list_pdf(
+    students: list[Student], activities: list[Activity], assignment: Assignment, path: Path
+):
+    student_id_map = get_student_id_map(students)
+    canv = canvas.Canvas(path.as_posix(), pagesize=A4)
+    canv.setTitle("Anwesenheitsliste")
+
+    for idx, activity in enumerate(activities):
+        y_high = A4[1]
+
+        canv.setFont("Helvetica", 12)
+        intro_text = canv.beginText(2 * cm, y_high - 2 * cm)
+        intro_text.textLine("Anwesenheitsliste für Kurs")
+        intro_text.textLine("")
+        intro_text.setFont("Helvetica-Bold", 12)
+        intro_text.textOut(f"  {activity.name} ")
+        intro_text.setFont("Helvetica", 12)
+        intro_text.textLine(f"({str(activity.timespan)}):")
+        canv.drawText(intro_text)
+
+        columns = 7
+
+        students = [student_id_map[student_id] for student_id in assignment.get_students_for_activity(activity.id)]
+        sorted_students = sorted(students, key=attrgetter("grade", "subgrade", "name"))
+
+        data = [["Datum:"] + [""] * (columns - 1)] + [
+            [f"{student.name} ({student.grade}{student.subgrade})"] + ([""] * (columns - 1))
+            for student in sorted_students
+        ]
+
+        t = Table(
+            data,
+            [4 * cm] + ([2 * cm] * (columns - 1)),
+            [0.75 * cm] * len(data),
+            style=[
+                ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+                ("LINEBELOW", (0, 0), (-1, 0), 1, colors.black),
+                ("LINEAFTER", (0, 0), (0, -1), 1, colors.black),
+                ("FONTNAME", (0, 0), (0, 0), "Helvetica-Bold"),
+            ],
+        )
+
+        t.wrapOn(canv, 0, 0)
+        t.drawOn(canv, x=2.5 * cm, y=y_high - 4 * cm - 0.75 * cm * len(data))
+
+        canv.showPage()
     canv.save()
