@@ -139,13 +139,21 @@ class ModifyStudentDialog(ctk.CTkToplevel):
         preference_label = ctk.CTkLabel(preference_frame, text="Präferenzen:", font=ctk.CTkFont(size=16))
         preference_label.grid(row=0, column=0, columnspan=2, padx=20, pady=20, sticky="w")
         self.preference_check_vars: dict[ID, ctk.BooleanVar] = {}
+        self.preference_check_vars_2: dict[ID, ctk.BooleanVar] = {}
         for activity_idx, activity in enumerate(State().activities, start=0):
             check_var = ctk.BooleanVar(value=False)
             activity_checkbox = ctk.CTkCheckBox(
-                preference_frame, text=activity.name, variable=check_var, onvalue=True, offvalue=False
+                preference_frame, text="", variable=check_var, onvalue=True, offvalue=False
             )
-            activity_checkbox.grid(row=1 + activity_idx // 2, column=activity_idx % 2, padx=40, pady=10, sticky="w")
+            activity_checkbox.grid(row=1 + activity_idx, column=0, padx=(40, 0), pady=10, sticky="e")
             self.preference_check_vars[activity.id] = check_var
+
+            check_var_2 = ctk.BooleanVar(value=False)
+            activity_checkbox_2 = ctk.CTkCheckBox(
+                preference_frame, text=activity.name, variable=check_var_2, onvalue=True, offvalue=False
+            )
+            activity_checkbox_2.grid(row=1 + activity_idx, column=1, padx=(0, 40), pady=10, sticky="w")
+            self.preference_check_vars_2[activity.id] = check_var_2
 
         button_frame = ctk.CTkFrame(self)
         button_frame.grid(row=3, column=0, sticky="we")
@@ -162,7 +170,10 @@ class ModifyStudentDialog(ctk.CTkToplevel):
         self.name_entry.insert(0, student.name)
         self.grade_option.set(str(student.grade) + student.subgrade)
         for activity_id in student.preferences:
-            self.preference_check_vars[activity_id].set(True)
+            if self.preference_check_vars[activity_id].get():
+                self.preference_check_vars_2[activity_id].set(True)
+            else:
+                self.preference_check_vars[activity_id].set(True)
 
     def on_accept(self):
         state = State()
@@ -170,6 +181,9 @@ class ModifyStudentDialog(ctk.CTkToplevel):
         grade = int(self.grade_option.get()[0])
         subgrade = self.grade_option.get()[1]
         preferences = [activity_id for activity_id, check_var in self.preference_check_vars.items() if check_var.get()]
+        preferences += [
+            activity_id for activity_id, check_var in self.preference_check_vars_2.items() if check_var.get()
+        ]
 
         activity_map = get_activity_id_map(state.activities)
         for activity_id in preferences:
