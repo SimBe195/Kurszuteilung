@@ -51,9 +51,9 @@ def create_student_assignment_pdf(
         outro_text = canv.beginText(2 * cm, y_high - 9 * cm)
         outro_text.textLine("Im Falle von Fragen oder geänderten Abholzeiten informieren Sie uns bitte per E-Mail")
         outro_text.textOut("unter ")
-        outro_text.setFillColor(colors.blue)
+        # outro_text.setFillColor(colors.blue)
         outro_text.textOut("ogs.hoefchensweg@invia-aachen.de.")
-        outro_text.setFillColor(colors.black)
+        # outro_text.setFillColor(colors.black)
         outro_text.textLine("")
         outro_text.textLine("")
         outro_text.textLine("")
@@ -127,22 +127,27 @@ def create_course_attendance_list_pdf(
         intro_text.textLine(f"({str(activity.timespan)}):")
         canv.drawText(intro_text)
 
-        columns = 7
+        date_columns = 10
+        empty_rows = 5
 
         students = [student_id_map[student_id] for student_id in assignment.get_students_for_activity(activity.id)]
         sorted_students = sorted(students, key=attrgetter("grade", "subgrade", "name"))
 
-        data = [["Datum:"] + [""] * (columns - 1)] + [
-            [f"{student.name} ({student.grade}{student.subgrade})"] + ([""] * (columns - 1))
-            for student in sorted_students
-        ]
+        data = (
+            [["Datum:"] + [""] * date_columns]
+            + [
+                [f"{student.name} ({student.grade}{student.subgrade})"] + ([""] * date_columns)
+                for student in sorted_students
+            ]
+            + [[""] * (date_columns + 1)] * empty_rows
+        )
 
         t = Table(
             data,
-            [4 * cm] + ([2 * cm] * (columns - 1)),
+            [4 * cm] + ([(A4[0] - 8 * cm) / date_columns] * date_columns),
             [0.75 * cm] * len(data),
             style=[
-                ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+                ("GRID", (0, 0), (-1, -1), 0.5, colors.dimgray),
                 ("LINEBELOW", (0, 0), (-1, 0), 1, colors.black),
                 ("LINEAFTER", (0, 0), (0, -1), 1, colors.black),
                 ("FONTNAME", (0, 0), (0, 0), "Helvetica-Bold"),
@@ -150,7 +155,7 @@ def create_course_attendance_list_pdf(
         )
 
         t.wrapOn(canv, 0, 0)
-        t.drawOn(canv, x=2.5 * cm, y=y_high - 4 * cm - 0.75 * cm * len(data))
+        t.drawOn(canv, x=2 * cm, y=y_high - 4 * cm - 0.75 * cm * len(data))
 
         canv.showPage()
     canv.save()
