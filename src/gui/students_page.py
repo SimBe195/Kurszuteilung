@@ -134,7 +134,9 @@ class ModifyStudentDialog(ctk.CTkToplevel):
 
         self.grade_option.grid(row=0, column=1, padx=20, pady=20)
 
-        preference_frame = ctk.CTkFrame(self)
+        preference_frame = ctk.CTkScrollableFrame(self)
+        preference_frame.grid_columnconfigure(0, weight=1)
+        preference_frame.grid_columnconfigure(1, weight=1)
         preference_frame.grid(row=2, column=0, sticky="we")
         preference_label = ctk.CTkLabel(preference_frame, text="Präferenzen:", font=ctk.CTkFont(size=16))
         preference_label.grid(row=0, column=0, columnspan=2, padx=20, pady=20, sticky="w")
@@ -145,14 +147,14 @@ class ModifyStudentDialog(ctk.CTkToplevel):
             activity_checkbox = ctk.CTkCheckBox(
                 preference_frame, text="", variable=check_var, onvalue=True, offvalue=False
             )
-            activity_checkbox.grid(row=1 + activity_idx, column=0, padx=(40, 0), pady=10, sticky="e")
+            activity_checkbox.grid(row=1 + activity_idx, column=0, padx=(20, 0), pady=1, sticky="e")
             self.preference_check_vars[activity.id] = check_var
 
             check_var_2 = ctk.BooleanVar(value=False)
             activity_checkbox_2 = ctk.CTkCheckBox(
                 preference_frame, text=activity.name, variable=check_var_2, onvalue=True, offvalue=False
             )
-            activity_checkbox_2.grid(row=1 + activity_idx, column=1, padx=(0, 40), pady=10, sticky="w")
+            activity_checkbox_2.grid(row=1 + activity_idx, column=1, padx=(0, 20), pady=1, sticky="w")
             self.preference_check_vars_2[activity.id] = check_var_2
 
         button_frame = ctk.CTkFrame(self)
