@@ -100,6 +100,7 @@ class MainWindow(ctk.CTk):
         menu_bar.add_cascade(label="Export", menu=export_menu)
 
         export_menu.add_command(label="Schülerzuteilungen...", command=self.export_per_student)
+        export_menu.add_command(label="Schülerpräferenzen...", command=self.export_per_preference)
         export_menu.add_command(label="Kurszuteilungen...", command=self.export_per_activity)
         export_menu.add_command(label="Anwesenheitslisten...", command=self.export_attendance)
 
@@ -159,6 +160,14 @@ class MainWindow(ctk.CTk):
         result_path = Path(result)
         state = State()
         pdf.create_course_assignment_pdf(state.students, state.activities, state.assignment, result_path)
+
+    def export_per_preference(self):
+        result = tk.filedialog.asksaveasfilename(parent=self, defaultextension=".pdf", filetypes=[("pdf", "*.pdf")])
+        if not result:
+            return
+        result_path = Path(result)
+        state = State()
+        pdf.create_course_preference_pdf(state.students, state.activities, state.assignment, result_path)
 
     def export_attendance(self):
         result = tk.filedialog.asksaveasfilename(parent=self, defaultextension=".pdf", filetypes=[("pdf", "*.pdf")])

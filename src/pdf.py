@@ -45,7 +45,10 @@ def create_student_assignment_pdf(
         for num, activity_id in enumerate(assignment.get_activities_for_student(student.id)):
             activity = activity_id_map[activity_id]
             add_bullet_point(
-                canv, f"{activity.name} ({activity.timespan})", 2.5 * cm, y_high - 5.3 * cm - num * 0.8 * cm
+                canv,
+                f"{activity.name} ({activity.timespan}; erster Termin {activity.first_date})",
+                2.5 * cm,
+                y_high - 5.3 * cm - num * 0.8 * cm,
             )
 
         outro_text = canv.beginText(2 * cm, y_high - 9 * cm)
@@ -99,8 +102,62 @@ def create_course_assignment_pdf(
 
         for num, student in enumerate(sorted_students):
             x = 2.5 * cm + (num // rows) * ((A4[0] - 5 * cm) // columns)
-            y = y_high - 5 * cm - (num % rows) * 0.8 * cm
+            y = y_high - 5 * cm - (num % rows) * 0.6 * cm
             add_bullet_point(canv, f"{student.name} ({student.grade}{student.subgrade})", x, y)
+
+        if idx % activities_per_page == activities_per_page - 1:
+            canv.showPage()
+    canv.save()
+
+
+def create_course_preference_pdf(
+    students: list[Student], activities: list[Activity], assignment: Assignment, path: Path
+):
+    activity_id_map = get_activity_id_map(activities)
+    canv = canvas.Canvas(path.as_posix(), pagesize=A4)
+    canv.setTitle("Kurszuteilungen")
+
+    activities_per_page = 1
+
+    for idx, activity in enumerate(activities):
+        y_high = A4[1] - (idx % activities_per_page) * (A4[1] // activities_per_page)
+
+        canv.setFont("Helvetica", 12)
+        intro_text = canv.beginText(2 * cm, y_high - 2 * cm)
+        intro_text.textOut("Folgende Kinder haben die Kursaktivität ")
+        intro_text.setFont("Helvetica-Bold", 12)
+        intro_text.textOut(activity.name)
+        intro_text.setFont("Helvetica", 12)
+        intro_text.textOut(" gewählt:")
+        canv.drawText(intro_text)
+
+        students = [student for student in students if activity.id in student.preferences]
+
+        sorted_students = sorted(students, key=attrgetter("grade", "subgrade", "name"))
+        sorted_students = sorted(
+            sorted_students, key=lambda s: -int(s.id in assignment.get_students_for_activity(activity.id))
+        )
+
+        columns = 1
+        rows = -(len(students) // -columns)
+
+        for num, student in enumerate(sorted_students):
+            x = 2.5 * cm + (num // rows) * ((A4[0] - 5 * cm) // columns)
+            y = y_high - 3.0 * cm - (num % rows) * 0.5 * cm
+            student_activities = assignment.get_activities_for_student(student.id)
+            if activity.id in student_activities:
+                canv.setFillColor(colors.blue)
+            else:
+                canv.setFillColor(colors.red)
+
+            activity_str = ", ".join([activity_id_map[activity].name for activity in student_activities])
+            add_bullet_point(
+                canv,
+                f"{student.name} ({student.grade}{student.subgrade}); zugeteilt zu {activity_str}.",
+                x,
+                y,
+            )
+            canv.setFillColor(colors.black)
 
         if idx % activities_per_page == activities_per_page - 1:
             canv.showPage()

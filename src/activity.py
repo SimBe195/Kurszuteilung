@@ -78,6 +78,7 @@ class Activity:
     name: str
     min_capacity: int = 0
     max_capacity: int = float("inf")
+    first_date: str = ""
     timespan: Timespan = field(default_factory=lambda: Timespan(0, 0))
     valid_grades: list[bool] = field(default_factory=lambda: [True] * 4)
     id: ID = field(default_factory=ActivityIDGenerator().get_next_id)

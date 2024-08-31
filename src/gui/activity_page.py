@@ -49,7 +49,7 @@ class ActivityPage(ctk.CTkFrame):
         self.activity_view = ctk.CTkScrollableFrame(self)
         self.activity_view.grid(row=3, column=0, padx=20, pady=30, sticky="nsew")
 
-        for idx, title in enumerate(["ID", "Bezeichnung", "Min. TN.", "Max. TN.", "Zeitslot", "Klassen"]):
+        for idx, title in enumerate(["ID", "Bezeichnung", "Min. TN.", "Max. TN.", "Zeitslot", "Ersttermin", "Klassen"]):
             column_title = ctk.CTkLabel(self.activity_view, text=title, font=ctk.CTkFont(size=20))
             column_title.grid(row=0, column=idx, padx=20)
 
@@ -86,6 +86,7 @@ class ActivityPage(ctk.CTkFrame):
                 min_capacity=activity.min_capacity,
                 max_capacity=activity.max_capacity,
                 timespan=activity.timespan,
+                first_date=activity.first_date,
                 valid_grades=copy.deepcopy(activity.valid_grades),
             )
             State().add_activity(activity_2)
@@ -123,9 +124,14 @@ class ActivityPage(ctk.CTkFrame):
             timespan_label = ctk.CTkLabel(self.activity_view, text=str(activity.timespan), font=ctk.CTkFont(size=16))
             timespan_label.grid(row=row, column=4, pady=5, sticky="nsew")
 
+            first_date_label = ctk.CTkLabel(
+                self.activity_view, text=str(activity.first_date), font=ctk.CTkFont(size=16)
+            )
+            first_date_label.grid(row=row, column=5, pady=5, sticky="nsew")
+
             grades_text = ", ".join([str(grade) for grade in range(1, 5) if activity.is_valid_grade(grade)])
             grades_label = ctk.CTkLabel(self.activity_view, text=grades_text, font=ctk.CTkFont(size=16))
-            grades_label.grid(row=row, column=5, pady=5, sticky="nsew")
+            grades_label.grid(row=row, column=6, pady=5, sticky="nsew")
 
 
 class ModifyActivityDialog(ctk.CTkToplevel):
@@ -163,6 +169,14 @@ class ModifyActivityDialog(ctk.CTkToplevel):
             timespan_frame, width=50, values=[f"{h:02d}:{15 * m:02d}" for h in range(8, 18) for m in range(4)]
         )
         self.timespan_to_hour_option.grid(row=0, column=4, padx=10)
+
+        first_date_frame = ctk.CTkFrame(self)
+        first_date_frame.grid(row=current_row, column=0, sticky="we")
+        current_row += 1
+        first_date_label = ctk.CTkLabel(first_date_frame, text="Erster Termin:", font=ctk.CTkFont(size=16))
+        first_date_label.grid(row=0, column=0, padx=20, pady=20, sticky="w")
+        self.first_date_entry = ctk.CTkEntry(first_date_frame)
+        self.first_date_entry.grid(row=0, column=1, padx=20, pady=20, sticky="we")
 
         capacity_frame = ctk.CTkFrame(self)
         capacity_frame.grid_columnconfigure(0, weight=1)
@@ -240,6 +254,7 @@ class ModifyActivityDialog(ctk.CTkToplevel):
         self.timespan_day_option.set(WEEKDAYS[from_day])
         self.timespan_from_hour_option.set(f"{from_hour:02d}:{from_minute:02d}")
         self.timespan_to_hour_option.set(f"{to_hour:02d}:{to_minute:02d}")
+        self.first_date_entry.insert(0, activity.first_date)
         self.min_capacity_var.set(activity.min_capacity)
         self.max_capacity_var.set(activity.max_capacity)
         for check_var, valid in zip(self.valid_grades_check_vars, activity.valid_grades):
@@ -252,6 +267,7 @@ class ModifyActivityDialog(ctk.CTkToplevel):
         day = WEEKDAYS.index(self.timespan_day_option.get())
         from_hour, from_minute = map(int, self.timespan_from_hour_option.get().split(":"))
         to_hour, to_minute = map(int, self.timespan_to_hour_option.get().split(":"))
+        first_date = self.first_date_entry.get()
         min_capacity = self.min_capacity_var.get()
         max_capacity = self.max_capacity_var.get()
         valid_grades = [check_var.get() for check_var in self.valid_grades_check_vars]
@@ -284,6 +300,7 @@ class ModifyActivityDialog(ctk.CTkToplevel):
 
             self.current_activity.name = name
             self.current_activity.timespan = timespan
+            self.current_activity.first_date = first_date
             self.current_activity.min_capacity = min_capacity
             self.current_activity.max_capacity = max_capacity
             self.current_activity.valid_grades = valid_grades
@@ -294,6 +311,7 @@ class ModifyActivityDialog(ctk.CTkToplevel):
                     min_capacity=min_capacity,
                     max_capacity=max_capacity,
                     timespan=timespan,
+                    first_date=first_date,
                     valid_grades=valid_grades,
                 )
             )
