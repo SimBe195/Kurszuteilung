@@ -79,7 +79,7 @@ class StudentsPage(ctk.CTkFrame):
     def reset_preferences(self):
         if confirm_choice(self, f"Wirklich alle eingetragenen Präferenzen löschen?"):
             for student in State().students:
-                student.preferences = []
+                student.preferences = {}
                 State().reset_assignment()
             self.display_students()
 
@@ -102,7 +102,14 @@ class StudentsPage(ctk.CTkFrame):
             )
             grade_label.grid(row=row, column=2, pady=5, sticky="nsew")
 
-            preference_text = ", ".join([activity_id_map[activity_id].name for activity_id in student.preferences])
+            sorted_preferences = list(student.preferences.keys())
+            sorted_preferences.sort(key=lambda p: student.preferences[p])
+            preference_text = ", ".join(
+                [
+                    f"{student.preferences[activity_id]}: {activity_id_map[activity_id].name}"
+                    for activity_id in sorted_preferences
+                ]
+            )
             preference_label = ctk.CTkLabel(self.student_view, text=preference_text, font=ctk.CTkFont(size=16))
             preference_label.grid(row=row, column=3, pady=5, sticky="nsew")
 
@@ -140,22 +147,14 @@ class ModifyStudentDialog(ctk.CTkToplevel):
         preference_frame.grid(row=2, column=0, sticky="we")
         preference_label = ctk.CTkLabel(preference_frame, text="Präferenzen:", font=ctk.CTkFont(size=16))
         preference_label.grid(row=0, column=0, columnspan=2, padx=20, pady=20, sticky="w")
-        self.preference_check_vars: dict[ID, ctk.BooleanVar] = {}
-        self.preference_check_vars_2: dict[ID, ctk.BooleanVar] = {}
+        self.preference_options: dict[ID, ctk.CTkOptionMenu] = {}
         for activity_idx, activity in enumerate(State().activities, start=0):
-            check_var = ctk.BooleanVar(value=False)
-            activity_checkbox = ctk.CTkCheckBox(
-                preference_frame, text="", variable=check_var, onvalue=True, offvalue=False
+            activity_label = ctk.CTkLabel(preference_frame, text=activity.name, font=ctk.CTkFont(size=14))
+            self.preference_options[activity.id] = ctk.CTkOptionMenu(
+                preference_frame, values=["-"] + list(map(str, range(1, 4)))
             )
-            activity_checkbox.grid(row=1 + activity_idx, column=0, padx=(20, 0), pady=1, sticky="e")
-            self.preference_check_vars[activity.id] = check_var
-
-            check_var_2 = ctk.BooleanVar(value=False)
-            activity_checkbox_2 = ctk.CTkCheckBox(
-                preference_frame, text=activity.name, variable=check_var_2, onvalue=True, offvalue=False
-            )
-            activity_checkbox_2.grid(row=1 + activity_idx, column=1, padx=(0, 20), pady=1, sticky="w")
-            self.preference_check_vars_2[activity.id] = check_var_2
+            activity_label.grid(row=1 + activity_idx, column=0, padx=20, pady=1, sticky="w")
+            self.preference_options[activity.id].grid(row=1 + activity_idx, column=1, padx=(20, 0), pady=1, sticky="e")
 
         button_frame = ctk.CTkFrame(self)
         button_frame.grid(row=3, column=0, sticky="we")
@@ -172,20 +171,17 @@ class ModifyStudentDialog(ctk.CTkToplevel):
         self.name_entry.insert(0, student.name)
         self.grade_option.set(str(student.grade) + student.subgrade)
         for activity_id in student.preferences:
-            if self.preference_check_vars[activity_id].get():
-                self.preference_check_vars_2[activity_id].set(True)
-            else:
-                self.preference_check_vars[activity_id].set(True)
+            self.preference_options[activity_id].set(student.preferences.get(activity_id, "-"))
 
     def on_accept(self):
         state = State()
         name = self.name_entry.get()
         grade = int(self.grade_option.get()[0])
         subgrade = self.grade_option.get()[1]
-        preferences = [activity_id for activity_id, check_var in self.preference_check_vars.items() if check_var.get()]
-        preferences += [
-            activity_id for activity_id, check_var in self.preference_check_vars_2.items() if check_var.get()
-        ]
+        preferences = {}
+        for activity_id, option in self.preference_options.items():
+            if option.get() != "-":
+                preferences[activity_id] = int(option.get())
 
         activity_map = get_activity_id_map(state.activities)
         for activity_id in preferences:
