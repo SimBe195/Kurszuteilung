@@ -225,7 +225,10 @@ def assign_students(students: list[Student], activities: list[Activity]) -> Assi
                 prob += x[student.id, activity_0.id] + x[student.id, activity_1.id] <= 1
 
     prob += pulp.lpSum(
-        x[(student.id, activity.id)] for student in students for activity in activities if is_valid(student, activity)
+        x[(student.id, activity.id)] * (10 - student.preferences[activity.id])
+        for student in students
+        for activity in activities
+        if is_valid(student, activity)
     ) - 1000 * pulp.lpSum(no_course_penalties[student.id] for student in students)
 
     solver = pulp.PULP_CBC_CMD(msg=False)

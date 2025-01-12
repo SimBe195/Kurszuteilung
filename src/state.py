@@ -15,9 +15,9 @@ import json
 
 @singleton
 class State:
-    students: list[Student]
-    activities: list[Activity]
-    assignment: Assignment
+    students: list[Student] = []
+    activities: list[Activity] = []
+    assignment: Assignment = Assignment()
 
     def __init__(
         self,

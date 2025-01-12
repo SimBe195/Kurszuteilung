@@ -40,7 +40,7 @@ def test_remove_from_non_assigned_activity(example_assignment):
 
 def test_assign_bad_grade():
     assignment = assign_mod.Assignment()
-    student = Student(name="A", grade=1, subgrade="a", preferences=[1])
+    student = Student(name="A", grade=1, subgrade="a", preferences={1: 1})
     activity = Activity(name="A", valid_grades=[False, True, True, True])
 
     with pytest.raises(assign_mod.GradeRestrictionViolation):
@@ -69,7 +69,7 @@ def test_assign_validity(example_students, example_activities, example_assignmen
 
 def test_assign_validity_grade_restriction_violation():
     activity = Activity(name="A", valid_grades=[True, False, True, True])
-    student = Student(name="A", grade=2, subgrade="a", preferences=[activity.id])
+    student = Student(name="A", grade=2, subgrade="a", preferences={activity.id: 1})
     assignment = assign_mod.Assignment()
     assignment.assign_student_to_activity_by_id(student.id, activity.id)
     exceptions = assignment.check_validity([student], [activity])
@@ -78,7 +78,7 @@ def test_assign_validity_grade_restriction_violation():
 
 def test_assign_validity_min_capacity_violation():
     activity = Activity(name="A", min_capacity=2)
-    student = Student(name="A", grade=2, subgrade="a", preferences=[activity.id])
+    student = Student(name="A", grade=2, subgrade="a", preferences={activity.id: 1})
     assignment = assign_mod.Assignment()
     assignment.assign_student_to_activity(student, activity)
     exceptions = assignment.check_validity([student], [activity])
@@ -87,8 +87,8 @@ def test_assign_validity_min_capacity_violation():
 
 def test_assign_validity_max_capacity_violation():
     activity = Activity(name="A", max_capacity=1)
-    student_1 = Student(name="A", grade=2, subgrade="a", preferences=[activity.id])
-    student_2 = Student(name="B", grade=3, subgrade="a", preferences=[activity.id])
+    student_1 = Student(name="A", grade=2, subgrade="a", preferences={activity.id: 1})
+    student_2 = Student(name="B", grade=3, subgrade="a", preferences={activity.id: 1})
     assignment = assign_mod.Assignment()
     assignment.assign_student_to_activity(student_1, activity)
     with pytest.raises(assign_mod.MaximumCapacityReached):
@@ -97,7 +97,7 @@ def test_assign_validity_max_capacity_violation():
 
 def test_assign_validity_preference_violation():
     activity = Activity(name="A", max_capacity=1)
-    student = Student(name="A", grade=2, subgrade="a", preferences=[activity.id + 1])
+    student = Student(name="A", grade=2, subgrade="a", preferences={activity.id + 1: 1})
     assignment = assign_mod.Assignment()
     with pytest.raises(assign_mod.ActivityNotPreferred):
         assignment.assign_student_to_activity(student, activity)
@@ -124,9 +124,9 @@ def test_auto_assign_overbooked():
         Activity(name="B", min_capacity=0, max_capacity=2),
     ]
     students = [
-        Student(name="A", grade=1, subgrade="a", preferences=[activities[0].id, activities[1].id]),
-        Student(name="B", grade=1, subgrade="a", preferences=[activities[0].id]),
-        Student(name="C", grade=1, subgrade="a", preferences=[activities[0].id, activities[1].id]),
+        Student(name="A", grade=1, subgrade="a", preferences={activities[0].id: 1, activities[1].id: 1}),
+        Student(name="B", grade=1, subgrade="a", preferences={activities[0].id: 1}),
+        Student(name="C", grade=1, subgrade="a", preferences={activities[0].id: 1, activities[1].id: 1}),
     ]
     assignment = assign_mod.assign_students(students, activities)
     assert set(assignment.get_students_for_activity(activities[0].id)) == {students[1].id}
@@ -139,10 +139,10 @@ def test_auto_assign_overbooked_all_max_capacity():
         Activity(name="B", min_capacity=0, max_capacity=3),
     ]
     students = [
-        Student(name="A", grade=1, subgrade="a", preferences=[activities[0].id, activities[1].id]),
-        Student(name="B", grade=1, subgrade="a", preferences=[activities[0].id]),
-        Student(name="C", grade=1, subgrade="a", preferences=[activities[0].id, activities[1].id]),
-        Student(name="D", grade=1, subgrade="a", preferences=[activities[0].id, activities[1].id]),
+        Student(name="A", grade=1, subgrade="a", preferences={activities[0].id: 1, activities[1].id: 1}),
+        Student(name="B", grade=1, subgrade="a", preferences={activities[0].id: 1}),
+        Student(name="C", grade=1, subgrade="a", preferences={activities[0].id: 1, activities[1].id: 1}),
+        Student(name="D", grade=1, subgrade="a", preferences={activities[0].id: 1, activities[1].id: 1}),
     ]
     assignment = assign_mod.assign_students(students, activities)
     assert len(assignment.get_students_for_activity(activities[0].id)) == activities[0].max_capacity
@@ -150,7 +150,7 @@ def test_auto_assign_overbooked_all_max_capacity():
 
 
 def test_auto_assign_non_existing_preference(example_students, example_activities, example_assignment):
-    example_students[0].preferences.append(-1)
+    example_students[0].preferences[-1] = 1
     with pytest.raises(assign_mod.ActivityIDNotAssigned):
         assign_mod.assign_students(example_students, example_activities)
 
@@ -165,9 +165,9 @@ def test_auto_assign_minimum_capacity_violation(example_students, example_activi
 def test_auto_assign_maximum_capacity_violation():
     activity = Activity(name="A", max_capacity=1)
     students = [
-        Student(name="A", grade=1, subgrade="a", preferences=[activity.id]),
-        Student(name="B", grade=1, subgrade="a", preferences=[activity.id]),
-        Student(name="C", grade=1, subgrade="a", preferences=[activity.id]),
+        Student(name="A", grade=1, subgrade="a", preferences={activity.id: 1}),
+        Student(name="B", grade=1, subgrade="a", preferences={activity.id: 1}),
+        Student(name="C", grade=1, subgrade="a", preferences={activity.id: 1}),
     ]
     assignment = assign_mod.assign_students(students, [activity])
     exceptions = assignment.check_validity(students, [activity])
@@ -190,9 +190,9 @@ def test_overbooking_and_capacity_constraints():
         ),
     ]
     students = [
-        Student(name="A", grade=1, subgrade="a", preferences=[1, 2]),
-        Student(name="B", grade=1, subgrade="a", preferences=[1]),
-        Student(name="C", grade=1, subgrade="a", preferences=[1, 2]),
+        Student(name="A", grade=1, subgrade="a", preferences={1: 1, 2: 1}),
+        Student(name="B", grade=1, subgrade="a", preferences={1: 1}),
+        Student(name="C", grade=1, subgrade="a", preferences={1: 1, 2: 1}),
     ]
     assignment = assign_mod.assign_students(students, activities)
     assert assignment.participant_count(1) <= activities[0].max_capacity
@@ -215,8 +215,8 @@ def test_timing_conflicts():
         ),
     ]
     students = [
-        Student(name="A", grade=1, subgrade="a", preferences=[1, 2]),
-        Student(name="B", grade=1, subgrade="a", preferences=[1, 2]),
+        Student(name="A", grade=1, subgrade="a", preferences={1: 1, 2: 1}),
+        Student(name="B", grade=1, subgrade="a", preferences={1: 1, 2: 1}),
     ]
     assignment = assign_mod.assign_students(students, activities)
     assert len(assignment.get_activities_for_student(students[0].id)) == 1
@@ -239,9 +239,39 @@ def test_invalid_preference_assignment():
         ),
     ]
     students = [
-        Student(name="A", grade=1, subgrade="a", preferences=[1, 2]),  # Preference for activity 0 but not allowed there
-        Student(name="B", grade=2, subgrade="a", preferences=[1, 2]),
+        Student(
+            name="A", grade=1, subgrade="a", preferences={1: 1, 2: 1}
+        ),  # Preference for activity 0 but not allowed there
+        Student(name="B", grade=2, subgrade="a", preferences={1: 1, 2: 1}),
     ]
     assignment = assign_mod.assign_students(students, activities)
     assert set(assignment.get_activities_for_student(students[0].id)) == {activities[1].id}
     assert set(assignment.get_activities_for_student(students[1].id)) == {activities[0].id, activities[1].id}
+
+
+def test_auto_assign_weighted():
+    students = [
+        Student(name="A", grade=1, subgrade="a", preferences={1: 1, 2: 2}),
+        Student(name="B", grade=2, subgrade="b", preferences={1: 2, 2: 1}),
+    ]
+    activities = [
+        Activity(name="A", max_capacity=1),
+        Activity(name="B", max_capacity=1),
+    ]
+
+    target_assignment = assign_mod.Assignment()
+    target_assignment.assign_student_to_activity_by_id(1, 1)
+    target_assignment.assign_student_to_activity_by_id(2, 2)
+
+    assignment = assign_mod.assign_students(students, activities)
+    assert assignment == target_assignment
+
+    students[0].preferences = {1: 2, 2: 1}
+    students[1].preferences = {1: 1, 2: 2}
+
+    target_assignment = assign_mod.Assignment()
+    target_assignment.assign_student_to_activity_by_id(1, 2)
+    target_assignment.assign_student_to_activity_by_id(2, 1)
+
+    assignment = assign_mod.assign_students(students, activities)
+    assert assignment == target_assignment

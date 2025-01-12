@@ -15,8 +15,8 @@ def reset_id_generators() -> None:
 @pytest.fixture
 def example_students() -> list[Student]:
     return [
-        Student(name="A", grade=1, subgrade="a", preferences=[1, 2]),
-        Student(name="B", grade=2, subgrade="b", preferences=[2]),
+        Student(name="A", grade=1, subgrade="a", preferences={1: 1, 2: 1}),
+        Student(name="B", grade=2, subgrade="b", preferences={2: 1}),
     ]
 
 

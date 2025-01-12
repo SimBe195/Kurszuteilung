@@ -17,7 +17,7 @@ class Student:
     name: str
     grade: int
     subgrade: str
-    preferences: list[ID] = field(default_factory=list)
+    preferences: dict[ID, int] = field(default_factory=dict)
     id: int = field(default_factory=StudentIDGenerator().get_next_id)
 
 
