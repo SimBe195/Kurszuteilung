@@ -80,7 +80,7 @@ class State:
 
         for student in self.students:
             try:
-                student.preferences.remove(activity_id)
+                del student.preferences[activity_id]
             except ValueError:
                 pass
 

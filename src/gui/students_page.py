@@ -106,7 +106,9 @@ class StudentsPage(ctk.CTkFrame):
             sorted_preferences.sort(key=lambda p: student.preferences[p])
             preference_text = ", ".join(
                 [
-                    f"{student.preferences[activity_id]}: {activity_id_map[activity_id].name}"
+                    f"{student.preferences[activity_id]}: {activity_id_map[activity_id].name}".replace(
+                        "-100", "Garantiert"
+                    )
                     for activity_id in sorted_preferences
                 ]
             )
@@ -151,7 +153,7 @@ class ModifyStudentDialog(ctk.CTkToplevel):
         for activity_idx, activity in enumerate(State().activities, start=0):
             activity_label = ctk.CTkLabel(preference_frame, text=activity.name, font=ctk.CTkFont(size=14))
             self.preference_options[activity.id] = ctk.CTkOptionMenu(
-                preference_frame, values=["-"] + list(map(str, range(1, 4)))
+                preference_frame, values=["-"] + ["Garantiert"] + list(map(str, range(1, 4)))
             )
             activity_label.grid(row=1 + activity_idx, column=0, padx=20, pady=1, sticky="w")
             self.preference_options[activity.id].grid(row=1 + activity_idx, column=1, padx=(20, 0), pady=1, sticky="e")
@@ -171,7 +173,11 @@ class ModifyStudentDialog(ctk.CTkToplevel):
         self.name_entry.insert(0, student.name)
         self.grade_option.set(str(student.grade) + student.subgrade)
         for activity_id in student.preferences:
-            self.preference_options[activity_id].set(student.preferences.get(activity_id, "-"))
+            preference = student.preferences.get(activity_id, "-")
+            if preference == -100:
+                self.preference_options[activity_id].set("Garantiert")
+            else:
+                self.preference_options[activity_id].set(preference)
 
     def on_accept(self):
         state = State()
@@ -181,7 +187,10 @@ class ModifyStudentDialog(ctk.CTkToplevel):
         preferences = {}
         for activity_id, option in self.preference_options.items():
             if option.get() != "-":
-                preferences[activity_id] = int(option.get())
+                if option.get() == "Garantiert":
+                    preferences[activity_id] = -100
+                else:
+                    preferences[activity_id] = int(option.get())
 
         activity_map = get_activity_id_map(state.activities)
         for activity_id in preferences:
