@@ -1,13 +1,11 @@
+from abc import ABC, abstractmethod
 from tkinter import ttk
 from typing import Any
 
 import customtkinter as ctk
 import numpy as np
-
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
-
-from abc import ABC, abstractmethod
 
 from assignment import StudentIDNotAssigned
 from state import State
@@ -15,8 +13,7 @@ from state import State
 
 class StateStatistic(ABC):
     @abstractmethod
-    def display_stats(self):
-        ...
+    def display_stats(self): ...
 
 
 class PreferenceCountsByCourse(ctk.CTkFrame, StateStatistic):
@@ -25,7 +22,11 @@ class PreferenceCountsByCourse(ctk.CTkFrame, StateStatistic):
 
         self.grid_columnconfigure(0, weight=1)
 
-        title = ctk.CTkLabel(self, text="Anzahl Wahlen pro Kurs", font=ctk.CTkFont(weight="bold", size=20))
+        title = ctk.CTkLabel(
+            self,
+            text="Anzahl Wahlen pro Kurs",
+            font=ctk.CTkFont(weight="bold", size=20),
+        )
         title.grid(row=0, column=0, padx=20, pady=(20, 0), sticky="w")
 
         fig = Figure(figsize=(14, 6), dpi=100)
@@ -55,9 +56,12 @@ class PreferenceCountsByCourse(ctk.CTkFrame, StateStatistic):
         def shorten_str(s: str, maxlen: int) -> str:
             if len(s) <= maxlen:
                 return s
-            return f"{s[:maxlen-3]}..."
+            return f"{s[: maxlen - 3]}..."
 
-        data = {shorten_str(activity_names[key], 20): pref_counts[key] for key in activity_names}
+        data = {
+            shorten_str(activity_names[key], 20): pref_counts[key]
+            for key in activity_names
+        }
 
         n_bars = len(data)
 
@@ -71,7 +75,14 @@ class PreferenceCountsByCourse(ctk.CTkFrame, StateStatistic):
         for i in range(n_segments_per_bar):
             y_vals = [data[key][i] for key in data]
             bars.extend(
-                self.plot.bar(indices, y_vals, width=0.6, color=colors[i], label=f"Klasse {i+1}", bottom=bottoms)
+                self.plot.bar(
+                    indices,
+                    y_vals,
+                    width=0.6,
+                    color=colors[i],
+                    label=f"Klasse {i + 1}",
+                    bottom=bottoms,
+                )
             )
             bottoms += np.array(y_vals)
 
@@ -90,7 +101,6 @@ class PreferenceCountsByCourse(ctk.CTkFrame, StateStatistic):
 
         for tick in self.plot.get_xticklabels():
             tick.set_rotation(45)
-            tick.set_ha("right")
 
         self.plot.legend()
 
@@ -103,7 +113,11 @@ class AssignmentCountsByCourse(ctk.CTkFrame, StateStatistic):
 
         self.grid_columnconfigure(0, weight=1)
 
-        title = ctk.CTkLabel(self, text="Anzahl Zuteilungen pro Kurs", font=ctk.CTkFont(weight="bold", size=20))
+        title = ctk.CTkLabel(
+            self,
+            text="Anzahl Zuteilungen pro Kurs",
+            font=ctk.CTkFont(weight="bold", size=20),
+        )
         title.grid(row=0, column=0, padx=20, pady=(20, 0), sticky="w")
 
         fig = Figure(figsize=(14, 6), dpi=100)
@@ -129,7 +143,7 @@ class AssignmentCountsByCourse(ctk.CTkFrame, StateStatistic):
         def shorten_str(s: str, maxlen: int) -> str:
             if len(s) <= maxlen:
                 return s
-            return f"{s[:maxlen-3]}..."
+            return f"{s[: maxlen - 3]}..."
 
         for activity in state.activities:
             if not state.assignment.activity_known(activity.id):
@@ -152,7 +166,14 @@ class AssignmentCountsByCourse(ctk.CTkFrame, StateStatistic):
         for i in range(n_segments_per_bar):
             y_vals = [data[key][0][i] for key in data]
             bars.extend(
-                self.plot.bar(indices, y_vals, width=0.6, color=colors[i], label=f"Klasse {i+1}", bottom=bottoms)
+                self.plot.bar(
+                    indices,
+                    y_vals,
+                    width=0.6,
+                    color=colors[i],
+                    label=f"Klasse {i + 1}",
+                    bottom=bottoms,
+                )
             )
             bottoms += np.array(y_vals)
 
@@ -187,7 +208,6 @@ class AssignmentCountsByCourse(ctk.CTkFrame, StateStatistic):
 
         for tick in self.plot.get_xticklabels():
             tick.set_rotation(45)
-            tick.set_ha("right")
 
         self.plot.legend()
 
@@ -201,7 +221,9 @@ class AssignmentCountCounts(ctk.CTkFrame, StateStatistic):
         self.grid_columnconfigure(0, weight=1)
 
         title = ctk.CTkLabel(
-            self, text="Anzahl Kinder mit zugewiesener Kurszahl", font=ctk.CTkFont(weight="bold", size=20)
+            self,
+            text="Anzahl Kinder mit zugewiesener Kurszahl",
+            font=ctk.CTkFont(weight="bold", size=20),
         )
         title.grid(row=0, column=0, padx=20, pady=(20, 0), sticky="w")
 
@@ -225,7 +247,9 @@ class AssignmentCountCounts(ctk.CTkFrame, StateStatistic):
 
         for student in state.students:
             try:
-                assigned_courses_count = len(state.assignment.get_activities_for_student(student.id))
+                assigned_courses_count = len(
+                    state.assignment.get_activities_for_student(student.id)
+                )
             except StudentIDNotAssigned:
                 assigned_courses_count = 0
             if assigned_courses_count not in count_counts:
@@ -242,7 +266,7 @@ class AssignmentCountCounts(ctk.CTkFrame, StateStatistic):
         _, _, autotexts = self.plot.pie(
             counts,
             labels=labels,
-            autopct=lambda pct: f"{int(round(pct/100. * sum(counts))):d}\n({pct:.1f}%)",
+            autopct=lambda pct: f"{round(pct / 100.0 * sum(counts)):d}\n({pct:.1f}%)",
             colors=colors,
             textprops={"color": "w"},
         )

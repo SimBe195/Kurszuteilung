@@ -1,9 +1,9 @@
 import pytest
 
-from activity import ActivityIDGenerator, Activity, Timespan
+from activity import Activity, ActivityIDGenerator, Timespan
 from assignment import Assignment
 from state import State
-from student import StudentIDGenerator, Student
+from student import Student, StudentIDGenerator
 
 
 @pytest.fixture(autouse=True)

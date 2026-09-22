@@ -16,10 +16,14 @@ class ConfirmationDialog(ctk.CTkToplevel):
 
         self.choice_var = ctk.BooleanVar()
 
-        accept_button = ctk.CTkButton(self, text="Akzeptieren", font=ctk.CTkFont(size=16), command=self.on_accept)
+        accept_button = ctk.CTkButton(
+            self, text="Akzeptieren", font=ctk.CTkFont(size=16), command=self.on_accept
+        )
         accept_button.grid(row=1, column=0, padx=30, pady=20)
 
-        cancel_button = ctk.CTkButton(self, text="Abbrechen", font=ctk.CTkFont(size=16), command=self.on_cancel)
+        cancel_button = ctk.CTkButton(
+            self, text="Abbrechen", font=ctk.CTkFont(size=16), command=self.on_cancel
+        )
         cancel_button.grid(row=1, column=1, padx=30, pady=20)
 
     def on_accept(self):

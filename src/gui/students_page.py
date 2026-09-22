@@ -1,4 +1,4 @@
-from tkinter import ttk
+from tkinter import Widget, ttk
 from typing import Any
 
 import customtkinter as ctk
@@ -27,22 +27,34 @@ class StudentsPage(ctk.CTkFrame):
         button_frame = ctk.CTkFrame(self, fg_color=self.cget("fg_color"))
         button_frame.grid(row=2, column=0, padx=20, sticky="w")
         add_student_button = ctk.CTkButton(
-            button_frame, text="Hinzufügen", font=ctk.CTkFont(size=18), command=self.add_student
+            button_frame,
+            text="Hinzufügen",
+            font=ctk.CTkFont(size=18),
+            command=self.add_student,
         )
         add_student_button.grid(row=0, column=0, padx=10)
 
         edit_student_button = ctk.CTkButton(
-            button_frame, text="Bearbeiten", font=ctk.CTkFont(size=18), command=self.edit_student
+            button_frame,
+            text="Bearbeiten",
+            font=ctk.CTkFont(size=18),
+            command=self.edit_student,
         )
         edit_student_button.grid(row=0, column=1, padx=10)
 
         remove_student_button = ctk.CTkButton(
-            button_frame, text="Entfernen", font=ctk.CTkFont(size=18), command=self.remove_student
+            button_frame,
+            text="Entfernen",
+            font=ctk.CTkFont(size=18),
+            command=self.remove_student,
         )
         remove_student_button.grid(row=0, column=2, padx=10)
 
         reset_preferences_button = ctk.CTkButton(
-            button_frame, text="Präferenzen löschen", font=ctk.CTkFont(size=18), command=self.reset_preferences
+            button_frame,
+            text="Präferenzen löschen",
+            font=ctk.CTkFont(size=18),
+            command=self.reset_preferences,
         )
         reset_preferences_button.grid(row=0, column=3, padx=10, sticky="e")
 
@@ -50,7 +62,9 @@ class StudentsPage(ctk.CTkFrame):
         self.student_view.grid(row=3, column=0, padx=20, pady=30, sticky="nsew")
 
         for idx, title in enumerate(["ID", "Name", "Klasse", "Präferenzen"]):
-            column_title = ctk.CTkLabel(self.student_view, text=title, font=ctk.CTkFont(size=20))
+            column_title = ctk.CTkLabel(
+                self.student_view, text=title, font=ctk.CTkFont(size=20)
+            )
             column_title.grid(row=0, column=idx, padx=20)
 
         self.display_students()
@@ -71,13 +85,15 @@ class StudentsPage(ctk.CTkFrame):
         self.display_students()
 
     def remove_student(self):
-        if (student := search_student(self)) is not None:
-            if confirm_choice(self, f'Kind "{student.name}" ({student.grade}{student.subgrade}) wirklich entfernen?'):
-                State().remove_student_by_id(student.id)
-                self.display_students()
+        if (student := search_student(self)) is not None and confirm_choice(
+            self,
+            f'Kind "{student.name}" ({student.grade}{student.subgrade}) wirklich entfernen?',
+        ):
+            State().remove_student_by_id(student.id)
+            self.display_students()
 
     def reset_preferences(self):
-        if confirm_choice(self, f"Wirklich alle eingetragenen Präferenzen löschen?"):
+        if confirm_choice(self, "Wirklich alle eingetragenen Präferenzen löschen?"):
             for student in State().students:
                 student.preferences = {}
                 State().reset_assignment()
@@ -85,20 +101,27 @@ class StudentsPage(ctk.CTkFrame):
 
     def display_students(self):
         for widget in self.student_view.winfo_children():
+            assert isinstance(widget, Widget)
             if widget.grid_info()["row"] > 0:
                 widget.destroy()
 
         state = State()
         activity_id_map = get_activity_id_map(state.activities)
         for row, student in enumerate(state.students, start=1):
-            id_label = ctk.CTkLabel(self.student_view, text=str(student.id), font=ctk.CTkFont(size=16))
+            id_label = ctk.CTkLabel(
+                self.student_view, text=str(student.id), font=ctk.CTkFont(size=16)
+            )
             id_label.grid(row=row, column=0, pady=5, sticky="nsew")
 
-            name_label = ctk.CTkLabel(self.student_view, text=student.name, font=ctk.CTkFont(size=16))
+            name_label = ctk.CTkLabel(
+                self.student_view, text=student.name, font=ctk.CTkFont(size=16)
+            )
             name_label.grid(row=row, column=1, pady=5, sticky="nsew")
 
             grade_label = ctk.CTkLabel(
-                self.student_view, text=str(student.grade) + student.subgrade, font=ctk.CTkFont(size=16)
+                self.student_view,
+                text=str(student.grade) + student.subgrade,
+                font=ctk.CTkFont(size=16),
             )
             grade_label.grid(row=row, column=2, pady=5, sticky="nsew")
 
@@ -112,7 +135,9 @@ class StudentsPage(ctk.CTkFrame):
                     for activity_id in sorted_preferences
                 ]
             )
-            preference_label = ctk.CTkLabel(self.student_view, text=preference_text, font=ctk.CTkFont(size=16))
+            preference_label = ctk.CTkLabel(
+                self.student_view, text=preference_text, font=ctk.CTkFont(size=16)
+            )
             preference_label.grid(row=row, column=3, pady=5, sticky="nsew")
 
 
@@ -134,11 +159,17 @@ class ModifyStudentDialog(ctk.CTkToplevel):
 
         grade_frame = ctk.CTkFrame(self)
         grade_frame.grid(row=1, column=0, sticky="we")
-        grade_label = ctk.CTkLabel(grade_frame, text="Klasse:", font=ctk.CTkFont(size=16))
+        grade_label = ctk.CTkLabel(
+            grade_frame, text="Klasse:", font=ctk.CTkFont(size=16)
+        )
         grade_label.grid(row=0, column=0, padx=20, pady=20, sticky="w")
         self.grade_option = ctk.CTkOptionMenu(
             grade_frame,
-            values=[grade + subgrade for grade in ["1", "2", "3", "4"] for subgrade in ["a", "b", "c", "d"]],
+            values=[
+                grade + subgrade
+                for grade in ["1", "2", "3", "4"]
+                for subgrade in ["a", "b", "c", "d"]
+            ],
         )
 
         self.grade_option.grid(row=0, column=1, padx=20, pady=20)
@@ -147,23 +178,38 @@ class ModifyStudentDialog(ctk.CTkToplevel):
         preference_frame.grid_columnconfigure(0, weight=1)
         preference_frame.grid_columnconfigure(1, weight=1)
         preference_frame.grid(row=2, column=0, sticky="we")
-        preference_label = ctk.CTkLabel(preference_frame, text="Präferenzen:", font=ctk.CTkFont(size=16))
-        preference_label.grid(row=0, column=0, columnspan=2, padx=20, pady=20, sticky="w")
+        preference_label = ctk.CTkLabel(
+            preference_frame, text="Präferenzen:", font=ctk.CTkFont(size=16)
+        )
+        preference_label.grid(
+            row=0, column=0, columnspan=2, padx=20, pady=20, sticky="w"
+        )
         self.preference_options: dict[ID, ctk.CTkOptionMenu] = {}
         for activity_idx, activity in enumerate(State().activities, start=0):
-            activity_label = ctk.CTkLabel(preference_frame, text=activity.name, font=ctk.CTkFont(size=14))
-            self.preference_options[activity.id] = ctk.CTkOptionMenu(
-                preference_frame, values=["-"] + ["Garantiert"] + list(map(str, range(1, 4)))
+            activity_label = ctk.CTkLabel(
+                preference_frame, text=activity.name, font=ctk.CTkFont(size=14)
             )
-            activity_label.grid(row=1 + activity_idx, column=0, padx=20, pady=1, sticky="w")
-            self.preference_options[activity.id].grid(row=1 + activity_idx, column=1, padx=(20, 0), pady=1, sticky="e")
+            self.preference_options[activity.id] = ctk.CTkOptionMenu(
+                preference_frame,
+                values=["-"] + ["Garantiert"] + list(map(str, range(1, 4))),
+            )
+            activity_label.grid(
+                row=1 + activity_idx, column=0, padx=20, pady=1, sticky="w"
+            )
+            self.preference_options[activity.id].grid(
+                row=1 + activity_idx, column=1, padx=(20, 0), pady=1, sticky="e"
+            )
 
         button_frame = ctk.CTkFrame(self)
         button_frame.grid(row=3, column=0, sticky="we")
-        accept_button = ctk.CTkButton(button_frame, text="Akzeptieren", command=self.on_accept)
+        accept_button = ctk.CTkButton(
+            button_frame, text="Akzeptieren", command=self.on_accept
+        )
         accept_button.grid(row=0, column=0, padx=20, pady=20)
 
-        cancel_button = ctk.CTkButton(button_frame, text="Abbrechen", command=self.destroy)
+        cancel_button = ctk.CTkButton(
+            button_frame, text="Abbrechen", command=self.destroy
+        )
         cancel_button.grid(row=0, column=1, padx=20, pady=20)
 
         self.current_student: Student | None = None
@@ -177,7 +223,7 @@ class ModifyStudentDialog(ctk.CTkToplevel):
             if preference == -100:
                 self.preference_options[activity_id].set("Garantiert")
             else:
-                self.preference_options[activity_id].set(preference)
+                self.preference_options[activity_id].set(str(preference))
 
     def on_accept(self):
         state = State()
@@ -194,7 +240,9 @@ class ModifyStudentDialog(ctk.CTkToplevel):
 
         activity_map = get_activity_id_map(state.activities)
         for activity_id in preferences:
-            if not activity_map[activity_id].is_valid_grade(grade) and not confirm_choice(
+            if not activity_map[activity_id].is_valid_grade(
+                grade
+            ) and not confirm_choice(
                 self,
                 f"Präferenz für Aktivität {activity_map[activity_id].name} angegeben, "
                 f"die keine Kinder aus Klasse {grade} zulässt.",

@@ -3,11 +3,11 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import Any
 
+import pulp
+
 from activity import Activity, get_activity_id_map
 from id_generator import ID
 from student import Student
-
-import pulp
 
 
 class AssignmentException(Exception):
@@ -31,7 +31,9 @@ class NoAssignedActivity(AssignmentException):
 
 class NotAssignedToActivity(AssignmentException):
     def __init__(self, student_id: ID, activity_id: ID):
-        super().__init__(f"Kind mit ID {student_id} ist nicht zum Kurs mit ID {activity_id} zugeteilt.")
+        super().__init__(
+            f"Kind mit ID {student_id} ist nicht zum Kurs mit ID {activity_id} zugeteilt."
+        )
 
 
 class EmptyPreferences(AssignmentException):
@@ -41,22 +43,30 @@ class EmptyPreferences(AssignmentException):
 
 class MinimumCapacityNotReached(AssignmentException):
     def __init__(self, activity: Activity, participant_count: int):
-        super().__init__(f"Kapazität von Kurs {activity} ist mit {participant_count} unterschritten.")
+        super().__init__(
+            f"Kapazität von Kurs {activity} ist mit {participant_count} unterschritten."
+        )
 
 
 class MaximumCapacityReached(AssignmentException):
     def __init__(self, activity: Activity, participant_count: int):
-        super().__init__(f"Kapazität von Kurs {activity} ist mit {participant_count} überschritten.")
+        super().__init__(
+            f"Kapazität von Kurs {activity} ist mit {participant_count} überschritten."
+        )
 
 
 class GradeRestrictionViolation(AssignmentException):
     def __init__(self, student: Student, activity: Activity):
-        super().__init__(f"Klasse von Kind {student} ist in Kurs {activity} nicht erlaubt.")
+        super().__init__(
+            f"Klasse von Kind {student} ist in Kurs {activity} nicht erlaubt."
+        )
 
 
 class ActivityNotPreferred(AssignmentException):
     def __init__(self, student: Student, activity: Activity):
-        super().__init__(f"Kind {student} ist zu Kurs {activity} hinzugefügt den es nicht gewählt hat.")
+        super().__init__(
+            f"Kind {student} ist zu Kurs {activity} hinzugefügt den es nicht gewählt hat."
+        )
 
 
 class Assignment:
@@ -65,15 +75,20 @@ class Assignment:
         self._activity_to_students_map: defaultdict[ID, set[ID]] = defaultdict(set)
 
     def is_empty(self) -> bool:
-        return all(self.participant_count(act_id) == 0 for act_id in self._activity_to_students_map)
+        return all(
+            self.participant_count(act_id) == 0
+            for act_id in self._activity_to_students_map
+        )
 
     def as_dict(self) -> dict[str, Any]:
         return {
             "student_activity_map": {
-                student_id: list(activity_ids) for student_id, activity_ids in self._student_to_activities_map.items()
+                student_id: list(activity_ids)
+                for student_id, activity_ids in self._student_to_activities_map.items()
             },
             "activity_student_map": {
-                activity_id: list(student_ids) for activity_id, student_ids in self._activity_to_students_map.items()
+                activity_id: list(student_ids)
+                for activity_id, student_ids in self._activity_to_students_map.items()
             },
         }
 
@@ -81,26 +96,46 @@ class Assignment:
     def from_dict(cls, data: dict[str, Any]) -> Assignment:
         assert set(data.keys()) == {"student_activity_map", "activity_student_map"}
         assignment = cls()
-        assignment._student_to_activities_map = {
-            int(student_id): set(activity_ids) for student_id, activity_ids in data["student_activity_map"].items()
-        }
-        assignment._activity_to_students_map = {
-            int(activity_id): set(student_ids) for activity_id, student_ids in data["activity_student_map"].items()
-        }
+        assignment._student_to_activities_map = defaultdict(
+            set,
+            {
+                int(student_id): set(activity_ids)
+                for student_id, activity_ids in data["student_activity_map"].items()
+            },
+        )
+        assignment._activity_to_students_map = defaultdict(
+            set,
+            {
+                int(activity_id): set(student_ids)
+                for activity_id, student_ids in data["activity_student_map"].items()
+            },
+        )
 
         return assignment
 
-    def __eq__(self, other: Assignment) -> bool:
-        if not set(self._student_to_activities_map.keys()) == set(other._student_to_activities_map.keys()):
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Assignment):
             return False
-        if not set(self._activity_to_students_map.keys()) == set(other._activity_to_students_map.keys()):
+        if not set(self._student_to_activities_map.keys()) == set(
+            other._student_to_activities_map.keys()
+        ):
+            return False
+        if not set(self._activity_to_students_map.keys()) == set(
+            other._activity_to_students_map.keys()
+        ):
             return False
 
         for student_id in self._student_to_activities_map:
-            if not self._student_to_activities_map[student_id] == other._student_to_activities_map[student_id]:
+            if (
+                not self._student_to_activities_map[student_id]
+                == other._student_to_activities_map[student_id]
+            ):
                 return False
         for activity_id in self._activity_to_students_map:
-            if not self._activity_to_students_map[activity_id] == other._activity_to_students_map[activity_id]:
+            if (
+                not self._activity_to_students_map[activity_id]
+                == other._activity_to_students_map[activity_id]
+            ):
                 return False
         return True
 
@@ -134,7 +169,9 @@ class Assignment:
             raise MaximumCapacityReached(activity, activity.max_capacity + 1)
         self.assign_student_to_activity_by_id(student.id, activity.id)
 
-    def remove_student_from_activity_by_id(self, student_id: ID, activity_id: ID) -> None:
+    def remove_student_from_activity_by_id(
+        self, student_id: ID, activity_id: ID
+    ) -> None:
         if student_id not in self._student_to_activities_map:
             raise StudentIDNotAssigned(student_id)
         if activity_id not in self._student_to_activities_map[student_id]:
@@ -146,7 +183,9 @@ class Assignment:
     def participant_count(self, activity_id: ID) -> int:
         return len(self._activity_to_students_map.get(activity_id, []))
 
-    def check_validity(self, students: list[Student], activities: list[Activity]) -> list[AssignmentException]:
+    def check_validity(
+        self, students: list[Student], activities: list[Activity]
+    ) -> list[AssignmentException]:
         exceptions = []
 
         activity_map = {activity.id: activity for activity in activities}
@@ -174,13 +213,27 @@ class Assignment:
         for activity in activities:
             participant_count = self.participant_count(activity.id)
             if participant_count < activity.min_capacity:
-                exceptions.append(MinimumCapacityNotReached(activity, participant_count))
+                exceptions.append(
+                    MinimumCapacityNotReached(activity, participant_count)
+                )
                 continue
             if participant_count > activity.max_capacity:
                 exceptions.append(MaximumCapacityReached(activity, participant_count))
                 continue
 
         return exceptions
+
+
+def _add_variable(
+    prob: pulp.LpProblem,
+    name: str,
+    lowBound: float | None = None,
+    upBound: float | None = None,
+    cat: str = pulp.LpContinuous,
+) -> pulp.LpVariable:
+    if hasattr(prob, "add_variable"):
+        return prob.add_variable(name, lowBound, upBound, cat=cat)
+    return pulp.LpVariable(name, lowBound, upBound, cat)
 
 
 def assign_students(students: list[Student], activities: list[Activity]) -> Assignment:
@@ -198,19 +251,38 @@ def assign_students(students: list[Student], activities: list[Activity]) -> Assi
     no_course_penalties = {}
     for student in students:
         for activity in activities:
-            x[(student.id, activity.id)] = pulp.LpVariable(f"x_{student.id}_{activity.id}", 0, 1, pulp.LpBinary)
-        no_course_penalties[student.id] = pulp.LpVariable(f"x_{student.id}_pen", 0, None, pulp.LpInteger)
+            x[(student.id, activity.id)] = _add_variable(
+                prob, f"x_{student.id}_{activity.id}", 0, 1, cat=pulp.LpBinary
+            )
+        no_course_penalties[student.id] = _add_variable(
+            prob, f"x_{student.id}_pen", 0, None, cat=pulp.LpInteger
+        )
 
     for activity in activities:
-        prob += pulp.lpSum(x[(student.id, activity.id)] for student in students) <= activity.max_capacity
-        prob += pulp.lpSum(x[(student.id, activity.id)] for student in students) >= activity.min_capacity
+        prob += (
+            pulp.lpSum(x[(student.id, activity.id)] for student in students)
+            <= activity.max_capacity
+        )
+        prob += (
+            pulp.lpSum(x[(student.id, activity.id)] for student in students)
+            >= activity.min_capacity
+        )
 
     for student in students:
         prob += (
-            pulp.lpSum(x[(student.id, activity.id)] for activity in activities if not is_valid(student, activity)) == 0
+            pulp.lpSum(
+                x[(student.id, activity.id)]
+                for activity in activities
+                if not is_valid(student, activity)
+            )
+            == 0
         )
         prob += (
-            pulp.lpSum(x[(student.id, activity.id)] for activity in activities if is_valid(student, activity))
+            pulp.lpSum(
+                x[(student.id, activity.id)]
+                for activity in activities
+                if is_valid(student, activity)
+            )
             + no_course_penalties[student.id]
             >= 1
         )
@@ -231,7 +303,10 @@ def assign_students(students: list[Student], activities: list[Activity]) -> Assi
         if is_valid(student, activity)
     ) - 1000 * pulp.lpSum(no_course_penalties[student.id] for student in students)
 
-    solver = pulp.PULP_CBC_CMD(msg=False)
+    if pulp.COIN_CMD().available():
+        solver = pulp.COIN_CMD(msg=False)
+    else:
+        solver = pulp.PULP_CBC_CMD(msg=False)
     prob.solve(solver)
 
     assignment = Assignment()

@@ -1,17 +1,18 @@
+import tkinter as tk
+import tkinter.filedialog
 from pathlib import Path
 
 import customtkinter as ctk
-import tkinter as tk
-import tkinter.filedialog
 
+import pdf
 from state import State
+
+from .activity_page import ActivityPage
 from .assignment_page import AssignmentPage
 from .confirmation import confirm_choice
 from .sidebar import Sidebar
 from .statistics_page import StatisticsPage
 from .students_page import StudentsPage
-from .activity_page import ActivityPage
-import pdf
 
 
 class MainWindow(ctk.CTk):
@@ -59,14 +60,22 @@ class MainWindow(ctk.CTk):
         menu_bar.add_cascade(label="Datei", menu=file_menu)
 
         file_menu.add_command(label="Neu", accelerator="Strg+N", command=self.new)
-        file_menu.add_command(label="Öffnen...", accelerator="Strg+O", command=self.load)
+        file_menu.add_command(
+            label="Öffnen...", accelerator="Strg+O", command=self.load
+        )
         file_menu.add_separator()
-        file_menu.add_command(label="Speichern", accelerator="Strg+S", command=self.save)
+        file_menu.add_command(
+            label="Speichern", accelerator="Strg+S", command=self.save
+        )
         file_menu.add_command(label="Speichern Unter...", command=self.save_as)
         file_menu.add_separator()
-        file_menu.add_command(label="Ansicht aktualisieren", command=self.update_display)
+        file_menu.add_command(
+            label="Ansicht aktualisieren", command=self.update_display
+        )
         file_menu.add_separator()
-        file_menu.add_command(label="Beenden", accelerator="Strg+W", command=self.destroy)
+        file_menu.add_command(
+            label="Beenden", accelerator="Strg+W", command=self.destroy
+        )
 
         self.bind_all("<Control-n>", lambda _: self.new())
         self.bind_all("<Control-o>", lambda _: self.load())
@@ -76,33 +85,62 @@ class MainWindow(ctk.CTk):
         student_menu = tk.Menu(menu_bar, tearoff=False)
         menu_bar.add_cascade(label="Kinder", menu=student_menu)
 
-        student_menu.add_command(label="Kind hinzufügen...", command=self.student_page.add_student)
-        student_menu.add_command(label="Kind bearbeiten...", command=self.student_page.edit_student)
-        student_menu.add_command(label="Kind entfernen...", command=self.student_page.remove_student)
+        student_menu.add_command(
+            label="Kind hinzufügen...", command=self.student_page.add_student
+        )
+        student_menu.add_command(
+            label="Kind bearbeiten...", command=self.student_page.edit_student
+        )
+        student_menu.add_command(
+            label="Kind entfernen...", command=self.student_page.remove_student
+        )
         student_menu.add_separator()
-        student_menu.add_command(label="Präferenzen löschen", command=self.student_page.reset_preferences)
+        student_menu.add_command(
+            label="Präferenzen löschen", command=self.student_page.reset_preferences
+        )
 
         activity_menu = tk.Menu(menu_bar, tearoff=False)
         menu_bar.add_cascade(label="Kurse", menu=activity_menu)
 
-        activity_menu.add_command(label="Kurs hinzufügen...", command=self.activity_page.add_activity)
-        activity_menu.add_command(label="Kurs bearbeiten...", command=self.activity_page.edit_activity)
-        activity_menu.add_command(label="Kurs entfernen...", command=self.activity_page.remove_activity)
-        activity_menu.add_command(label="Kurs aufteilen...", command=self.activity_page.split_activity)
+        activity_menu.add_command(
+            label="Kurs hinzufügen...", command=self.activity_page.add_activity
+        )
+        activity_menu.add_command(
+            label="Kurs bearbeiten...", command=self.activity_page.edit_activity
+        )
+        activity_menu.add_command(
+            label="Kurs entfernen...", command=self.activity_page.remove_activity
+        )
+        activity_menu.add_command(
+            label="Kurs aufteilen...", command=self.activity_page.split_activity
+        )
 
         assignment_menu = tk.Menu(menu_bar, tearoff=False)
         menu_bar.add_cascade(label="Zuteilung", menu=assignment_menu)
 
-        assignment_menu.add_command(label="Zuteilung generieren", command=self.assignment_page.generate_assignment)
-        assignment_menu.add_command(label="Zuteilung löschen", command=self.assignment_page.reset)
+        assignment_menu.add_command(
+            label="Zuteilung generieren",
+            command=self.assignment_page.generate_assignment,
+        )
+        assignment_menu.add_command(
+            label="Zuteilung löschen", command=self.assignment_page.reset
+        )
 
         export_menu = tk.Menu(menu_bar, tearoff=False)
         menu_bar.add_cascade(label="Export", menu=export_menu)
 
-        export_menu.add_command(label="Schülerzuteilungen...", command=self.export_per_student)
-        export_menu.add_command(label="Schülerpräferenzen...", command=self.export_per_preference)
-        export_menu.add_command(label="Kurszuteilungen...", command=self.export_per_activity)
-        export_menu.add_command(label="Anwesenheitslisten...", command=self.export_attendance)
+        export_menu.add_command(
+            label="Schülerzuteilungen...", command=self.export_per_student
+        )
+        export_menu.add_command(
+            label="Schülerpräferenzen...", command=self.export_per_preference
+        )
+        export_menu.add_command(
+            label="Kurszuteilungen...", command=self.export_per_activity
+        )
+        export_menu.add_command(
+            label="Anwesenheitslisten...", command=self.export_attendance
+        )
 
     def update_display(self):
         self.student_page.display_students()
@@ -112,7 +150,8 @@ class MainWindow(ctk.CTk):
 
     def new(self):
         if not confirm_choice(
-            self, "Es sind möglicherweise nicht-gespeicherte Änderungen vorhanden. Wirklich fortfahren?"
+            self,
+            "Es sind möglicherweise nicht-gespeicherte Änderungen vorhanden. Wirklich fortfahren?",
         ):
             return
 
@@ -121,7 +160,9 @@ class MainWindow(ctk.CTk):
         self.update_display()
 
     def load(self):
-        result = tk.filedialog.askopenfilename(parent=self, filetypes=[("json", "*.json")])
+        result = tk.filedialog.askopenfilename(
+            parent=self, filetypes=[("json", "*.json")]
+        )
         if not result:
             return
         result_path = Path(result)
@@ -138,7 +179,9 @@ class MainWindow(ctk.CTk):
             self.save_as()
 
     def save_as(self):
-        result = tk.filedialog.asksaveasfilename(parent=self, defaultextension=".json", filetypes=[("json", "*.json")])
+        result = tk.filedialog.asksaveasfilename(
+            parent=self, defaultextension=".json", filetypes=[("json", "*.json")]
+        )
         if not result:
             return
         result_path = Path(result)
@@ -146,33 +189,49 @@ class MainWindow(ctk.CTk):
         self.save()
 
     def export_per_student(self):
-        result = tk.filedialog.asksaveasfilename(parent=self, defaultextension=".pdf", filetypes=[("pdf", "*.pdf")])
+        result = tk.filedialog.asksaveasfilename(
+            parent=self, defaultextension=".pdf", filetypes=[("pdf", "*.pdf")]
+        )
         if not result:
             return
         result_path = Path(result)
         state = State()
-        pdf.create_student_assignment_pdf(state.students, state.activities, state.assignment, result_path)
+        pdf.create_student_assignment_pdf(
+            state.students, state.activities, state.assignment, result_path
+        )
 
     def export_per_activity(self):
-        result = tk.filedialog.asksaveasfilename(parent=self, defaultextension=".pdf", filetypes=[("pdf", "*.pdf")])
+        result = tk.filedialog.asksaveasfilename(
+            parent=self, defaultextension=".pdf", filetypes=[("pdf", "*.pdf")]
+        )
         if not result:
             return
         result_path = Path(result)
         state = State()
-        pdf.create_course_assignment_pdf(state.students, state.activities, state.assignment, result_path)
+        pdf.create_course_assignment_pdf(
+            state.students, state.activities, state.assignment, result_path
+        )
 
     def export_per_preference(self):
-        result = tk.filedialog.asksaveasfilename(parent=self, defaultextension=".pdf", filetypes=[("pdf", "*.pdf")])
+        result = tk.filedialog.asksaveasfilename(
+            parent=self, defaultextension=".pdf", filetypes=[("pdf", "*.pdf")]
+        )
         if not result:
             return
         result_path = Path(result)
         state = State()
-        pdf.create_course_preference_pdf(state.students, state.activities, state.assignment, result_path)
+        pdf.create_course_preference_pdf(
+            state.students, state.activities, state.assignment, result_path
+        )
 
     def export_attendance(self):
-        result = tk.filedialog.asksaveasfilename(parent=self, defaultextension=".pdf", filetypes=[("pdf", "*.pdf")])
+        result = tk.filedialog.asksaveasfilename(
+            parent=self, defaultextension=".pdf", filetypes=[("pdf", "*.pdf")]
+        )
         if not result:
             return
         result_path = Path(result)
         state = State()
-        pdf.create_course_attendance_list_pdf(state.students, state.activities, state.assignment, result_path)
+        pdf.create_course_attendance_list_pdf(
+            state.students, state.activities, state.assignment, result_path
+        )

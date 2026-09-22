@@ -1,27 +1,25 @@
 from __future__ import annotations
+
+import json
+from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
 from singleton_decorator import singleton
+
 from activity import Activity, ActivityIDGenerator
 from assignment import Assignment
 from id_generator import ID
 from student import Student, StudentIDGenerator
 
-from dataclasses import asdict
-
-import json
-
 
 @singleton
 class State:
-    students: list[Student] = []
-    activities: list[Activity] = []
-    assignment: Assignment = Assignment()
+    students: list[Student]
+    activities: list[Activity]
+    assignment: Assignment
 
-    def __init__(
-        self,
-    ) -> None:
+    def __init__(self) -> None:
         self.reset()
 
     def reset(self) -> None:
@@ -30,10 +28,14 @@ class State:
         self.reset_assignment()
 
     def reset_student_id(self):
-        StudentIDGenerator().reset(max([student.id for student in self.students] or [0]) + 1)
+        StudentIDGenerator().reset(
+            max([student.id for student in self.students] or [0]) + 1
+        )
 
     def reset_activity_id(self):
-        ActivityIDGenerator().reset(max([activity.id for activity in self.activities] or [0]) + 1)
+        ActivityIDGenerator().reset(
+            max([activity.id for activity in self.activities] or [0]) + 1
+        )
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -97,8 +99,12 @@ class State:
 
     def from_dict(self, state_dict: dict[str, Any]) -> State:
         assert set(state_dict.keys()) == {"students", "activities", "assignment"}
-        self.set_students([Student.from_dict(student) for student in state_dict["students"]])
-        self.set_activities([Activity.from_dict(activity) for activity in state_dict["activities"]])
+        self.set_students(
+            [Student.from_dict(student) for student in state_dict["students"]]
+        )
+        self.set_activities(
+            [Activity.from_dict(activity) for activity in state_dict["activities"]]
+        )
         self.set_assignment(Assignment.from_dict(state_dict["assignment"]))
 
         return self

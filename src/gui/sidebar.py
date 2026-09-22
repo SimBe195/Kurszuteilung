@@ -1,7 +1,7 @@
+from functools import partial
 from typing import Any
 
 import customtkinter as ctk
-from functools import partial
 
 
 class Sidebar(ctk.CTkFrame):
@@ -55,5 +55,5 @@ class Sidebar(ctk.CTkFrame):
 
         move_frames()
 
-    def pack(self):
-        super().pack(anchor="nw", side="left", expand=False, fill="y")
+    def pack(self, **kwargs):
+        super().pack(anchor="nw", side="left", expand=False, fill="y", **kwargs)

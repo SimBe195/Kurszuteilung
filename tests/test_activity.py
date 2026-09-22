@@ -1,7 +1,8 @@
+from dataclasses import asdict
+
 import pytest
 
 from activity import Activity, ActivityIDGenerator, InvalidGradeAccessError, Timespan
-from dataclasses import asdict
 
 
 def test_id_generation():

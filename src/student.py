@@ -1,9 +1,9 @@
 from dataclasses import dataclass, field
 
-from dataclasses_json import dataclass_json
+from dataclasses_json import DataClassJsonMixin
 from singleton_decorator import singleton
 
-from id_generator import IDGenerator, ID
+from id_generator import ID, IDGenerator
 
 
 @singleton
@@ -11,9 +11,8 @@ class StudentIDGenerator(IDGenerator):
     pass
 
 
-@dataclass_json
 @dataclass
-class Student:
+class Student(DataClassJsonMixin):
     name: str
     grade: int
     subgrade: str

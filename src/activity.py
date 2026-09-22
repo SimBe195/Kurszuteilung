@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from dataclasses_json import dataclass_json
+from dataclasses_json import DataClassJsonMixin
 from singleton_decorator import singleton
 
-from id_generator import IDGenerator, ID
+from id_generator import ID, IDGenerator
 
 
 @singleton
@@ -18,12 +18,19 @@ class InvalidGradeAccessError(Exception):
         super().__init__(f"Klasse muss zwischen 1 und 4 sein; ist {grade}.")
 
 
-WEEKDAYS = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"]
+WEEKDAYS = [
+    "Montag",
+    "Dienstag",
+    "Mittwoch",
+    "Donnerstag",
+    "Freitag",
+    "Samstag",
+    "Sonntag",
+]
 
 
-@dataclass_json
 @dataclass
-class Timespan:
+class Timespan(DataClassJsonMixin):
     from_slot: int
     to_slot: int
 
@@ -33,7 +40,13 @@ class Timespan:
 
     @classmethod
     def from_day_hour_minute(
-        cls, from_day: int, from_hour: int, from_minute: int, to_day: int, to_hour: int, to_minute: int
+        cls,
+        from_day: int,
+        from_hour: int,
+        from_minute: int,
+        to_day: int,
+        to_hour: int,
+        to_minute: int,
     ) -> Timespan:
         assert from_minute % 15 == 0
         assert to_minute % 15 == 0
@@ -42,17 +55,17 @@ class Timespan:
         return cls(from_slot, to_slot)
 
     @staticmethod
-    def convert_to_day_hour_minute(timeslot: int) -> (int, int, int):
+    def convert_to_day_hour_minute(timeslot: int) -> tuple[int, int, int]:
         minute = 15 * (timeslot % 4)
         hour = (timeslot // 4) % 24
         day = timeslot // 96
 
         return day, hour, minute
 
-    def get_from_day_hour_minute(self) -> (int, int, int):
+    def get_from_day_hour_minute(self) -> tuple[int, int, int]:
         return Timespan.convert_to_day_hour_minute(self.from_slot)
 
-    def get_to_day_hour_minute(self) -> (int, int, int):
+    def get_to_day_hour_minute(self) -> tuple[int, int, int]:
         return Timespan.convert_to_day_hour_minute(self.to_slot)
 
     def __str__(self):
@@ -69,15 +82,17 @@ class Timespan:
 
     @staticmethod
     def overlap(timeslot_0: Timespan, timeslot_1: Timespan) -> bool:
-        return not (timeslot_0.to_slot <= timeslot_1.from_slot or timeslot_1.to_slot <= timeslot_0.from_slot)
+        return not (
+            timeslot_0.to_slot <= timeslot_1.from_slot
+            or timeslot_1.to_slot <= timeslot_0.from_slot
+        )
 
 
-@dataclass_json
 @dataclass
-class Activity:
+class Activity(DataClassJsonMixin):
     name: str
     min_capacity: int = 0
-    max_capacity: int = float("inf")
+    max_capacity: int = float("inf")  # type: ignore
     first_date: str = ""
     timespan: Timespan = field(default_factory=lambda: Timespan(0, 0))
     valid_grades: list[bool] = field(default_factory=lambda: [True] * 4)

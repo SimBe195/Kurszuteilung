@@ -1,6 +1,6 @@
-import assignment as assign_mod
 import pytest
 
+import assignment as assign_mod
 from activity import Activity, Timespan
 from student import Student
 

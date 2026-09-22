@@ -11,10 +11,14 @@ class ErrorPopup(ctk.CTkToplevel):
         error_title = ctk.CTkLabel(self, text="Fehler!", font=ctk.CTkFont(size=22))
         error_title.grid(row=0, column=0, padx=20, pady=30)
 
-        error_label = ctk.CTkLabel(self, text=text, font=ctk.CTkFont(size=16), wraplength=500)
+        error_label = ctk.CTkLabel(
+            self, text=text, font=ctk.CTkFont(size=16), wraplength=500
+        )
         error_label.grid(row=1, column=0, padx=20, pady=20, sticky="w")
 
-        close_button = ctk.CTkButton(self, text="Ok", font=ctk.CTkFont(size=16), command=self.destroy)
+        close_button = ctk.CTkButton(
+            self, text="Ok", font=ctk.CTkFont(size=16), command=self.destroy
+        )
         close_button.grid(row=2, column=0, padx=20, pady=20)
 
 

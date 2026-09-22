@@ -1,5 +1,6 @@
+from collections.abc import Callable
 from functools import partial
-from typing import Any, Generic, TypeVar, Callable
+from typing import Any, Generic, TypeVar
 
 import customtkinter as ctk
 
@@ -24,7 +25,9 @@ class SearchDialog(ctk.CTkToplevel, Generic[ResultType]):
 
         self.grid_columnconfigure(0, weight=1)
 
-        self.search_entry = ctk.CTkEntry(self, placeholder_text="Suchbegriff eingeben...")
+        self.search_entry = ctk.CTkEntry(
+            self, placeholder_text="Suchbegriff eingeben..."
+        )
         self.search_entry.grid(row=0, column=0, padx=(20, 0), pady=30, sticky="we")
         self.search_entry.bind("<Return>", command=lambda _: self.search())
 
@@ -32,7 +35,9 @@ class SearchDialog(ctk.CTkToplevel, Generic[ResultType]):
         search_button.grid(row=0, column=1, padx=(10, 20), pady=30)
 
         self.results_frame = ctk.CTkScrollableFrame(self, width=550)
-        self.results_frame.grid(row=1, column=0, columnspan=2, padx=20, pady=20, sticky="nsew")
+        self.results_frame.grid(
+            row=1, column=0, columnspan=2, padx=20, pady=20, sticky="nsew"
+        )
 
         close_button = ctk.CTkButton(self, text="Schließen", command=self.destroy)
         close_button.grid(row=2, column=0, columnspan=2, padx=20, pady=20)
@@ -50,7 +55,9 @@ class SearchDialog(ctk.CTkToplevel, Generic[ResultType]):
 
         search_term = self.search_entry.get().lower()
         if search_term:
-            results = [value for key, value in self.search_space.items() if search_term in key]
+            results = [
+                value for key, value in self.search_space.items() if search_term in key
+            ]
         else:
             results = list(self.search_space.values())
 
@@ -60,13 +67,18 @@ class SearchDialog(ctk.CTkToplevel, Generic[ResultType]):
             return
 
         for idx, (title, _) in enumerate(self.columns):
-            column_title = ctk.CTkLabel(self.results_frame, text=title, font=ctk.CTkFont(size=14))
+            column_title = ctk.CTkLabel(
+                self.results_frame, text=title, font=ctk.CTkFont(size=14)
+            )
             column_title.grid(row=0, column=idx, padx=20)
 
         for row, result in enumerate(results, start=1):
             for column, (_, attribute_getter) in enumerate(self.columns):
                 column_label = ctk.CTkLabel(
-                    self.results_frame, text=attribute_getter(result), width=30, font=ctk.CTkFont(size=12)
+                    self.results_frame,
+                    text=attribute_getter(result),
+                    width=30,
+                    font=ctk.CTkFont(size=12),
                 )
                 column_label.grid(row=row, column=column, pady=5)
 
@@ -92,7 +104,7 @@ def search_student(master: Any) -> Student | None:
             for student in State().students
         },
         columns=[
-            ("ID", lambda student: student.id),
+            ("ID", lambda student: str(student.id)),
             ("Name", lambda student: student.name),
             ("Klasse", lambda student: str(student.grade) + student.subgrade),
         ],
@@ -106,9 +118,12 @@ def search_activity(master: Any) -> Activity | None:
     dialog = SearchDialog(
         master,
         title="Kurs auswählen",
-        search_space={f"{activity.id} {activity.name}".lower(): activity for activity in State().activities},
+        search_space={
+            f"{activity.id} {activity.name}".lower(): activity
+            for activity in State().activities
+        },
         columns=[
-            ("ID", lambda activity: activity.id),
+            ("ID", lambda activity: str(activity.id)),
             ("Bezeichnung", lambda activity: activity.name),
         ],
     )

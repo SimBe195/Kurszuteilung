@@ -1,5 +1,6 @@
-from . import main_window
 import customtkinter as ctk
+
+from . import main_window
 
 
 def run() -> None:

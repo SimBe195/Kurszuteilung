@@ -5,7 +5,7 @@ from typing import Any
 import customtkinter as ctk
 
 from activity import Activity
-from assignment import assign_students, Assignment
+from assignment import Assignment, assign_students
 from gui.confirmation import confirm_choice
 from state import State
 
@@ -27,7 +27,10 @@ class AssignmentPage(ctk.CTkFrame):
         button_frame.grid(row=2, column=0, padx=20, sticky="w")
 
         generate_assignment_button = ctk.CTkButton(
-            button_frame, text="Generieren", font=ctk.CTkFont(size=18), command=self.generate_assignment
+            button_frame,
+            text="Generieren",
+            font=ctk.CTkFont(size=18),
+            command=self.generate_assignment,
         )
         generate_assignment_button.grid(row=0, column=0, padx=10)
 
@@ -55,8 +58,9 @@ class AssignmentPage(ctk.CTkFrame):
         exceptions = new_assignment.check_validity(state.students, state.activities)
 
         if len(exceptions) > 0:
-            confirmation_text = f"Zuteilung enthält {len(exceptions)} Fehler:\n\n" + "\n\n".join(
-                map(str, exceptions[:10])
+            confirmation_text = (
+                f"Zuteilung enthält {len(exceptions)} Fehler:\n\n"
+                + "\n\n".join(map(str, exceptions[:10]))
             )
             if not confirm_choice(self, confirmation_text):
                 return
@@ -76,9 +80,17 @@ class AssignmentPage(ctk.CTkFrame):
 
         for activity_idx, activity in enumerate(activities):
             activity_frame = ctk.CTkFrame(self.assignment_view)
-            activity_frame.grid(row=activity_idx // 2, column=activity_idx % 2, padx=20, pady=20, sticky="nsew")
+            activity_frame.grid(
+                row=activity_idx // 2,
+                column=activity_idx % 2,
+                padx=20,
+                pady=20,
+                sticky="nsew",
+            )
 
-            activity_title = ctk.CTkLabel(activity_frame, text=activity.name, font=ctk.CTkFont(size=22))
+            activity_title = ctk.CTkLabel(
+                activity_frame, text=activity.name, font=ctk.CTkFont(size=22)
+            )
             activity_title.grid(row=0, column=0, columnspan=3, padx=5, pady=20)
 
             if activity.id != -1:
@@ -96,13 +108,19 @@ class AssignmentPage(ctk.CTkFrame):
             for student_row, student_id in enumerate(student_ids, start=1):
                 student = student_id_map[student_id]
 
-                index_label = ctk.CTkLabel(activity_frame, text=f"{student_row}.", font=ctk.CTkFont(size=16))
+                index_label = ctk.CTkLabel(
+                    activity_frame, text=f"{student_row}.", font=ctk.CTkFont(size=16)
+                )
                 index_label.grid(row=student_row, column=0, padx=5)
 
-                student_name_label = ctk.CTkLabel(activity_frame, text=student.name, font=ctk.CTkFont(size=16))
+                student_name_label = ctk.CTkLabel(
+                    activity_frame, text=student.name, font=ctk.CTkFont(size=16)
+                )
                 student_name_label.grid(row=student_row, column=1, padx=20)
 
                 student_grade_label = ctk.CTkLabel(
-                    activity_frame, text=str(student.grade) + student.subgrade, font=ctk.CTkFont(size=16)
+                    activity_frame,
+                    text=str(student.grade) + student.subgrade,
+                    font=ctk.CTkFont(size=16),
                 )
                 student_grade_label.grid(row=student_row, column=2, padx=20)

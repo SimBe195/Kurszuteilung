@@ -1,9 +1,34 @@
-name = "Kurszuteilung"
+[project]
+name = "kurszuteilung"
 version = "0.1.0"
 description = "Zuteilung von Kindern zu Aktivitäten unter Berücksichtigung angegebener Präferenzen."
-authors = [ "Simon Berger" ]
+authors = [
+    { name = "Simon Berger" },
+]
+requires-python = ">=3.10"
+dependencies = [
+    "customtkinter>=5.2.1",
+    "dataclasses-json>=0.6.2",
+    "matplotlib>=3.8.2",
+    "numpy>=1.26.2",
+    "pulp[cbc]>=2.7.0",
+    "reportlab>=4.0.6",
+    "singleton-decorator>=1.0.0",
+]
 
-repository="https://github.com/SimBe195/kurszuteilung"
+[project.urls]
+Repository = "https://github.com/SimBe195/kurszuteilung"
+
+[dependency-groups]
+dev = [
+    "pytest>=7.4.3",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
 
 [tool.black]
 line-length = 120
